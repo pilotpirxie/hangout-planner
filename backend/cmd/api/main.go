@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"meeting-planner/backend/internal/db"
 	"meeting-planner/backend/internal/handlers"
 	"meeting-planner/backend/internal/middleware"
 
@@ -18,6 +19,12 @@ import (
 
 func main() {
 	_ = godotenv.Load()
+
+	ctx := context.Background()
+	if err := db.Init(ctx); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer db.Close()
 
 	mux := http.NewServeMux()
 
@@ -76,10 +83,10 @@ func main() {
 
 	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err != nil {
+	if err := srv.Shutdown(ctxShutdown); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
