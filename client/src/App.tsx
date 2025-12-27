@@ -1,7 +1,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router";
 
 import { OutletContainer } from "./components/OutletContainer";
-import { Home } from "./Home";
+import { Calendar } from "./containers/Calendar";
 
 const router = createBrowserRouter([
   {
@@ -10,7 +10,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Home />,
+        element: <Calendar />,
       }
     ],
   },

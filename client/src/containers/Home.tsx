@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Collapse } from "./components/Collapse";
-import { Modal } from "./components/Modal";
-import { QuickSlotGenerator, useQuickSlotGenerator } from "./components/QuickSlotGenerator";
-import { TimeSlotForm, useTimeSlotModal } from "./components/TimeSlotForm";
-import { TimeSlotList } from "./components/TimeSlotList";
-import type { TimeSlot } from "./types";
+import { Collapse } from "../components/Collapse";
+import { Modal } from "../components/Modal";
+import { QuickSlotGenerator, useQuickSlotGenerator } from "../components/QuickSlotGenerator";
+import { TimeSlotForm, useTimeSlotModal } from "../components/TimeSlotForm";
+import { TimeSlotList } from "../components/TimeSlotList";
+import type { TimeSlot } from "../types";
 
 export const Home = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);

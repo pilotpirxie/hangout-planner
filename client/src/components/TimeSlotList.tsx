@@ -18,7 +18,7 @@ export const TimeSlotList = ({ timeSlots, onDelete, onEdit }: TimeSlotListProps)
   });
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 max-h-300px overflow-y-auto bg-light card card-body">
       {sortedSlots.map((slot) => (
         <div
           key={slot.id}

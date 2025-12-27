@@ -1,3 +1,12 @@
 .cursor-pointer {
   cursor: pointer;
 }
+
+.max-h-300px {
+  max-height: 300px;
+}
+
+.day-column {
+  min-width: 180px;
+  flex-shrink: 0;
+}
