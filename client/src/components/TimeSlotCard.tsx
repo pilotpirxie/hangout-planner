@@ -1,13 +1,14 @@
 import type { TimeSlot } from "../types";
 
-interface TimeSlotCardProps {
+export const TimeSlotCard = ({ timeSlot, onClick }: {
   timeSlot: TimeSlot;
-}
-
-export const TimeSlotCard = ({ timeSlot }: TimeSlotCardProps) => {
+  onClick: (timeSlotId: string) => void;
+}) => {
   return (
-    <div className="btn btn-info mt-2 cursor-pointer">
-      {timeSlot.startTime} - {timeSlot.endTime}
+    <div
+      className="btn btn-info mt-2 cursor-pointer"
+      onClick={() => { onClick(timeSlot.id); }}>
+      <div>{timeSlot.startTime} - {timeSlot.endTime}</div>
     </div>
   );
 };

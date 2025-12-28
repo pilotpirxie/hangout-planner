@@ -1,16 +1,6 @@
 import type { ReactNode } from "react";
 import { useFadeTransition } from "../hooks/useFadeTransition";
 
-interface ModalProps {
-  title: string;
-  isVisible: boolean;
-  children: ReactNode;
-  confirmText: string;
-  onConfirm: () => void;
-  onClose: () => void;
-  isConfirmDisabled?: boolean;
-}
-
 export const Modal = ({
   title,
   isVisible,
@@ -19,7 +9,15 @@ export const Modal = ({
   onConfirm,
   onClose,
   isConfirmDisabled = false,
-}: ModalProps) => {
+}: {
+  title: string;
+  isVisible: boolean;
+  children: ReactNode;
+  confirmText: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  isConfirmDisabled?: boolean;
+}) => {
   const { shouldRender, isAnimating } = useFadeTransition(isVisible);
 
   if (!shouldRender) {

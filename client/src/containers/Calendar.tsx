@@ -1,82 +1,126 @@
-import { useEffect, useRef, useState } from "react";
+import dayjs from "dayjs";
+import { useState } from "react";
 import { CalendarHeader } from "../components/CalendarHeader";
-import { DayColumn } from "../components/DayColumn";
-import { useGroupedTimeSlots } from "../hooks/useGroupedTimeSlots";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { DaySlotsModal } from "../components/DaySlotsModal";
+import { MonthGridView } from "../components/MonthGridView";
+import { TimeSlotConfirmationModal } from "../components/TimeSlotConfirmationModal";
+import { WeekView } from "../components/WeekView";
 import { useMockTimeSlots } from "../hooks/useMockTimeSlots";
+import { useTimeSlotSelection } from "../hooks/useTimeSlotSelection";
+import type { TimeSlot } from "../types";
 
-const DESKTOP_SPEED = 550;
-const MOBILE_SPEED = 250;
+type ViewMode = "week" | "month";
 
 export const Calendar = () => {
+  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [currentWeek, setCurrentWeek] = useState(dayjs().toDate());
+  const [currentMonth, setCurrentMonth] = useState(dayjs().toDate());
+  const [selectedDaySlots, setSelectedDaySlots] = useState<TimeSlot[] | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>("");
+
   const timeSlots = useMockTimeSlots();
-  const groupedSlots = useGroupedTimeSlots(timeSlots);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const isMobile = useIsMobile();
-  const scrollSpeed = isMobile ? MOBILE_SPEED : DESKTOP_SPEED;
+  const {
+    selectedTimeSlotId,
+    selectedTimeSlot,
+    nickname,
+    setNickname,
+    handleClickTimeSlot,
+    handleCloseModal,
+    handleConfirm,
+  } = useTimeSlotSelection(timeSlots);
 
-  const checkScrollPosition = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    setCanScrollLeft(container.scrollLeft > 0);
-    setCanScrollRight(container.scrollLeft < container.scrollWidth - container.clientWidth - 1);
+  const handleWeekChange = (direction: "prev" | "next") => {
+    setCurrentWeek((prev) => {
+      const newWeek = dayjs(prev);
+      if (direction === "prev") {
+        return newWeek.subtract(7, "days").toDate();
+      } else {
+        return newWeek.add(7, "days").toDate();
+      }
+    });
   };
 
-  const handleScroll = (direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const newScrollLeft = container.scrollLeft + (direction === "left" ? -scrollSpeed : scrollSpeed);
-    container.scrollTo({ left: newScrollLeft, behavior: "smooth" });
+  const handleMonthChange = (direction: "prev" | "next") => {
+    setCurrentMonth((prev) => {
+      const newMonth = dayjs(prev);
+      if (direction === "prev") {
+        return newMonth.subtract(1, "month").toDate();
+      } else {
+        return newMonth.add(1, "month").toDate();
+      }
+    });
   };
 
-  useEffect(() => {
-    checkScrollPosition();
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    container.addEventListener("scroll", checkScrollPosition);
+  const handleDayClick = (slots: TimeSlot[], date: string) => {
+    if (slots.length === 1) {
+      handleClickTimeSlot(slots[0].id);
+    } else {
+      setSelectedDaySlots(slots);
+      setSelectedDate(date);
+    }
+  };
 
-    return () => {
-      container.removeEventListener("scroll", checkScrollPosition);
-    };
-  }, [groupedSlots]);
+  const handleCloseDaySlotsModal = () => {
+    setSelectedDaySlots(null);
+    setSelectedDate("");
+  };
+
+  const handleGoToToday = () => {
+    const today = dayjs().toDate();
+    setCurrentWeek(today);
+    setCurrentMonth(today);
+  };
 
   return (
     <div className="bg-success vh-100 overflow-auto">
       <div
         className="container py-5">
         <div className="card">
-          <CalendarHeader eventName="Event name" />
-          <div className="card-body p-4 position-relative">
-            {canScrollLeft ? <button
-              className="btn btn-primary position-absolute top-0 start-0 translate-middle-y ms-5 z-1"
-              onClick={() => { handleScroll("left"); }}>
-              <i className="ri-arrow-left-long-line" />
-            </button> : null}
-
-            <div
-              className="d-flex gap-3 overflow-x-scroll pb-3"
-              style={{ scrollbarWidth: "thin" }}
-              ref={scrollContainerRef}>
-              {groupedSlots.map(day => (
-                <DayColumn
-                  key={day.date}
-                  date={day.date}
-                  slots={day.slots}
-                />
-              ))}
-            </div>
-
-            {canScrollRight ? <button
-              className="btn btn-primary position-absolute top-0 end-0 translate-middle-y me-5"
-              onClick={() => { handleScroll("right"); }}>
-              <i className="ri-arrow-right-long-line" />
-            </button> : null}
+          <CalendarHeader
+            eventName="Event name"
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            currentWeek={currentWeek}
+            currentMonth={currentMonth}
+            onWeekChange={handleWeekChange}
+            onMonthChange={handleMonthChange}
+            onGoToToday={handleGoToToday}
+          />
+          <div className="card-body px-4">
+            {viewMode === "week" ? (
+              <WeekView
+                timeSlots={timeSlots}
+                currentWeek={currentWeek}
+                onTimeSlotClick={handleClickTimeSlot}
+              />
+            ) : (
+              <MonthGridView
+                timeSlots={timeSlots}
+                currentMonth={currentMonth}
+                onDayClick={handleDayClick}
+              />
+            )}
           </div>
         </div>
       </div>
+
+      <DaySlotsModal
+        isVisible={!!selectedDaySlots}
+        date={selectedDate}
+        slots={selectedDaySlots ?? []}
+        onClose={handleCloseDaySlotsModal}
+        onSelectSlot={handleClickTimeSlot}
+      />
+
+      <TimeSlotConfirmationModal
+        isVisible={!!selectedTimeSlotId}
+        selectedTimeSlot={selectedTimeSlot}
+        nickname={nickname}
+        onNicknameChange={setNickname}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirm}
+      />
     </div>
   );
 };

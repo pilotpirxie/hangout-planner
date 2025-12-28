@@ -1,140 +1,3 @@
-import { useState } from "react";
-import type { TimeSlot } from "../types";
-
-interface QuickSlotGeneratorProps {
-  startDate: string;
-  endDate: string;
-  dailyStartTime: string;
-  dailyEndTime: string;
-  duration: string;
-  isOverlapping: boolean;
-  isWholeDay: boolean;
-  onStartDateChange: (date: string) => void;
-  onEndDateChange: (date: string) => void;
-  onDailyStartTimeChange: (time: string) => void;
-  onDailyEndTimeChange: (time: string) => void;
-  onDurationChange: (duration: string) => void;
-  onOverlappingChange: (isOverlapping: boolean) => void;
-  onWholeDayChange: (isWholeDay: boolean) => void;
-}
-
-export const useQuickSlotGenerator = () => {
-  const [isQuickModalOpen, setIsQuickModalOpen] = useState(false);
-  const [quickData, setQuickData] = useState({
-    startDate: "",
-    endDate: "",
-    dailyStartTime: "",
-    dailyEndTime: "",
-    duration: "",
-    isOverlapping: true,
-    isWholeDay: false,
-  });
-
-  const handleOpenQuickModal = () => {
-    setQuickData({
-      startDate: "",
-      endDate: "",
-      dailyStartTime: "",
-      dailyEndTime: "",
-      duration: "",
-      isOverlapping: true,
-      isWholeDay: false,
-    });
-    setIsQuickModalOpen(true);
-  };
-
-  const handleCloseQuickModal = () => {
-    setIsQuickModalOpen(false);
-    setQuickData({
-      startDate: "",
-      endDate: "",
-      dailyStartTime: "",
-      dailyEndTime: "",
-      duration: "",
-      isOverlapping: true,
-      isWholeDay: false,
-    });
-  };
-
-  const generateTimeSlots = (): TimeSlot[] => {
-    const generated: TimeSlot[] = [];
-    const start = new Date(quickData.startDate);
-    const end = new Date(quickData.endDate);
-
-    if (quickData.isWholeDay) {
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        const dateStr = date.toISOString().split("T")[0];
-        generated.push({
-          id: crypto.randomUUID(),
-          date: dateStr,
-          startTime: "00:00",
-          endTime: "23:59",
-        });
-      }
-      return generated;
-    }
-
-    const durationHours = parseFloat(quickData.duration);
-    const intervalHours = quickData.isOverlapping ? durationHours / 2 : durationHours;
-
-    const [dailyStartHour, dailyStartMin] = quickData.dailyStartTime.split(":").map(Number);
-    const [dailyEndHour, dailyEndMin] = quickData.dailyEndTime.split(":").map(Number);
-    const dailyStartMinutes = (dailyStartHour * 60) + dailyStartMin;
-    const dailyEndMinutes = (dailyEndHour * 60) + dailyEndMin;
-
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      const dateStr = date.toISOString().split("T")[0];
-
-      let currentMinutes = dailyStartMinutes;
-      while (currentMinutes + (durationHours * 60) <= dailyEndMinutes) {
-        const startHour = Math.floor(currentMinutes / 60);
-        const startMin = currentMinutes % 60;
-        const endMinutes = currentMinutes + (durationHours * 60);
-        const endHour = Math.floor(endMinutes / 60);
-        const endMin = endMinutes % 60;
-
-        const startTime = `${String(startHour).padStart(2, "0")}:${String(startMin).padStart(2, "0")}`;
-        const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
-
-        generated.push({
-          id: crypto.randomUUID(),
-          date: dateStr,
-          startTime,
-          endTime,
-        });
-
-        currentMinutes += intervalHours * 60;
-      }
-    }
-
-    return generated;
-  };
-
-  const handleGenerateQuickSlots = (onGenerate: (slots: TimeSlot[]) => void) => {
-    const slots = generateTimeSlots();
-    onGenerate(slots);
-    handleCloseQuickModal();
-  };
-
-  const isQuickFormValid = quickData.isWholeDay
-    ? quickData.startDate && quickData.endDate
-    : quickData.startDate &&
-    quickData.endDate &&
-    quickData.dailyStartTime &&
-    quickData.dailyEndTime &&
-    quickData.duration;
-
-  return {
-    isQuickModalOpen,
-    quickData,
-    setQuickData,
-    handleOpenQuickModal,
-    handleCloseQuickModal,
-    handleGenerateQuickSlots,
-    isQuickFormValid,
-  };
-};
-
 export const QuickSlotGenerator = ({
   startDate,
   endDate,
@@ -150,7 +13,22 @@ export const QuickSlotGenerator = ({
   onDurationChange,
   onOverlappingChange,
   onWholeDayChange,
-}: QuickSlotGeneratorProps) => {
+}: {
+  startDate: string;
+  endDate: string;
+  dailyStartTime: string;
+  dailyEndTime: string;
+  duration: string;
+  isOverlapping: boolean;
+  isWholeDay: boolean;
+  onStartDateChange: (date: string) => void;
+  onEndDateChange: (date: string) => void;
+  onDailyStartTimeChange: (time: string) => void;
+  onDailyEndTimeChange: (time: string) => void;
+  onDurationChange: (duration: string) => void;
+  onOverlappingChange: (isOverlapping: boolean) => void;
+  onWholeDayChange: (isWholeDay: boolean) => void;
+}) => {
   return (
     <>
       <div className="mt-3">

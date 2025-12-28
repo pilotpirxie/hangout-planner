@@ -1,12 +1,14 @@
 import type { TimeSlot } from "../types";
 
-interface TimeSlotListProps {
+export const TimeSlotList = ({
+  timeSlots,
+  onDelete,
+  onEdit
+}: {
   timeSlots: TimeSlot[];
   onDelete: (id: string) => void;
   onEdit: (slot: TimeSlot) => void;
-}
-
-export const TimeSlotList = ({ timeSlots, onDelete, onEdit }: TimeSlotListProps) => {
+  }) => {
   if (timeSlots.length === 0) {
     return null;
   }
