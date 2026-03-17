@@ -36,7 +36,7 @@ func (h *Handler) EchoEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	if parsingError != nil {
 		fmt.Printf("Error parsing request: %v\n", parsingError)
-		RespondError(w, http.StatusBadRequest, parsingError.Error())
+		RespondError(w, http.StatusBadRequest, parsingError.Error(), nil)
 		return
 	}
 

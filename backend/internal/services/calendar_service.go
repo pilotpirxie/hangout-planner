@@ -11,11 +11,13 @@ import (
 
 type CalendarService struct {
 	queries *sqlc.Queries
+	passwordManager *PasswordManager
 }
 
-func NewCalendarService(queries *sqlc.Queries) *CalendarService {
+func NewCalendarService(queries *sqlc.Queries, passwordManager *PasswordManager) *CalendarService {
 	return &CalendarService{
 		queries: queries,
+		passwordManager: passwordManager,
 	}
 }
 
@@ -24,13 +26,40 @@ type CreateCalendarInput struct {
 	Description          *string
 	Location             *string
 	AcceptResponsesUntil *time.Time
+	Password             *string
 }
 
-func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalendarInput) (pgtype.UUID, error) {
+func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalendarInput) (sqlc.CreateCalendarRow, error) {
+	var calendarPassword *string
+	var calendarSalt *string
+
+	if input.Password != nil {
+		var salt, err = s.passwordManager.GenerateSalt(16)
+		if err != nil {
+			return sqlc.CreateCalendarRow{}, fmt.Errorf("failed to generate salt: %w", err)
+		}
+
+		var passwordHash, hashErr = s.passwordManager.HashPassword(*input.Password, salt)
+		if hashErr != nil {	
+			return sqlc.CreateCalendarRow{}, fmt.Errorf("failed to hash password: %w", hashErr)
+		}
+
+		calendarPassword = &passwordHash
+		calendarSalt = &salt
+	}
+
+	var randomAdminToken, tokenErr = s.passwordManager.GenerateSalt(32)
+	if tokenErr != nil {
+		return sqlc.CreateCalendarRow{}, fmt.Errorf("failed to generate admin token: %w", tokenErr)
+	}
+
 	queryParams := sqlc.CreateCalendarParams{
 		Title:       input.Title,
 		Description: input.Description,
 		Location:    input.Location,
+		Password:    calendarPassword,
+		Salt:        calendarSalt,
+		AdminToken:  randomAdminToken,
 	}
 
 	if input.AcceptResponsesUntil != nil {
@@ -40,12 +69,12 @@ func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalend
 		}
 	}
 
-	calendarID, creationError := s.queries.CreateCalendar(ctx, queryParams)
+	calendarRow, creationError := s.queries.CreateCalendar(ctx, queryParams)
 	if creationError != nil {
-		return pgtype.UUID{}, fmt.Errorf("failed to create calendar: %w", creationError)
+		return sqlc.CreateCalendarRow{}, fmt.Errorf("failed to create calendar: %w", creationError)
 	}
 
-	return calendarID, nil
+	return calendarRow, nil
 }
 
 type TimeSlotInput struct {
@@ -76,6 +105,27 @@ func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input Cre
 		if creationError != nil {
 			return fmt.Errorf("failed to create calendar time slot: %w", creationError)
 		}
+	}
+
+	return nil
+}
+
+func (s *CalendarService) GetCalendar(ctx context.Context, calendarID pgtype.UUID) (*sqlc.GetCalendarByIDRow, error) {
+	calendar, retrievalError := s.queries.GetCalendarByID(ctx, calendarID)
+	if retrievalError != nil {
+		return nil, fmt.Errorf("failed to retrieve calendar: %w", retrievalError)
+	}
+
+	return &calendar, nil
+}
+
+func (s *CalendarService) VerifyCalendarAdminToken(ctx context.Context, calendarID pgtype.UUID, adminToken string) error {
+	_, retrievalError := s.queries.GetCalendarByIDAndAdminToken(ctx, sqlc.GetCalendarByIDAndAdminTokenParams{
+		ID:         calendarID,
+		AdminToken: adminToken,
+	})
+	if retrievalError != nil {
+		return fmt.Errorf("failed to verify calendar admin token: %w", retrievalError)
 	}
 
 	return nil

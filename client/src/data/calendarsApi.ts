@@ -5,6 +5,7 @@ export const calendarsApi = emptyApi.injectEndpoints({
   endpoints: (builder) => ({
     createCalendar: builder.mutation<{
       id: string;
+      admin_token: string;
     }, {
       title: string;
       description?: string;
@@ -12,32 +13,34 @@ export const calendarsApi = emptyApi.injectEndpoints({
       accept_responses_until?: string;
       password?: string;
     }>({
-      query: (body) => ({
+      query: (arg) => ({
         url: "/calendars",
         method: "POST",
         body: {
-          title: body.title,
-          description: body.description || undefined,
-          location: body.location || undefined,
-          password: body.password || undefined,
-          accept_responses_until: body.accept_responses_until
-            ? dayjs(body.accept_responses_until).toISOString()
+          title: arg.title,
+          description: arg.description || undefined,
+          location: arg.location || undefined,
+          password: arg.password || undefined,
+          accept_responses_until: arg.accept_responses_until
+            ? dayjs(arg.accept_responses_until).toISOString()
             : undefined,
         }
       }),
     }),
     createCalendarTimeSlots: builder.mutation<undefined, {
       calendar_id: string;
+      admin_token: string;
       time_slots: {
         start_date: string,
         end_date: string
       }[]
     }>({
-      query: (body) => ({
-        url: `/calendars/${body.calendar_id}/time-slots`,
+      query: (arg) => ({
+        url: `/calendars/${arg.calendar_id}/time-slots`,
         method: "POST",
         body: {
-          time_slots: body.time_slots.map(slot => {
+          admin_token: arg.admin_token,
+          time_slots: arg.time_slots.map(slot => {
             const parseLocalDateTime = (dateTimeStr: string) => {
               const [datePart, timePart] = dateTimeStr.split("T");
               const [year, month, day] = datePart.split("-").map(Number);
@@ -56,10 +59,27 @@ export const calendarsApi = emptyApi.injectEndpoints({
         }
       }),
     }),
+    getCalendar: builder.query<{
+      id: string;
+      title: string;
+      description?: string;
+      location?: string;
+      accept_responses_until?: string;
+      created_at: string;
+      updated_at: string;
+    }, {
+      calendar_id: string;
+    }>({
+      query: (arg) => ({
+        url: `/calendars/${arg.calendar_id}`,
+        method: "GET",
+      }),
+    }),
   })
 });
 
 export const {
   useCreateCalendarMutation,
-  useCreateCalendarTimeSlotsMutation
+  useCreateCalendarTimeSlotsMutation,
+  useGetCalendarQuery,
 } = calendarsApi;

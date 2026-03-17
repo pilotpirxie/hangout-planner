@@ -11,13 +11,14 @@ import (
 )
 
 type Querier interface {
-	CreateCalendar(ctx context.Context, arg CreateCalendarParams) (pgtype.UUID, error)
+	CreateCalendar(ctx context.Context, arg CreateCalendarParams) (CreateCalendarRow, error)
 	CreateCalendarTimeSlot(ctx context.Context, arg CreateCalendarTimeSlotParams) (CalendarTimeSlot, error)
 	CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, error)
-	DeleteCalendarByID(ctx context.Context, id pgtype.UUID) error
+	DeleteCalendarByIDAndAdminToken(ctx context.Context, arg DeleteCalendarByIDAndAdminTokenParams) error
 	DeleteCalendarTimeSlotByID(ctx context.Context, id pgtype.UUID) error
 	DeleteVotesByID(ctx context.Context, id pgtype.UUID) error
-	GetCalendarByID(ctx context.Context, id pgtype.UUID) (Calendar, error)
+	GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalendarByIDRow, error)
+	GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalendarByIDAndAdminTokenParams) (GetCalendarByIDAndAdminTokenRow, error)
 	GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]CalendarTimeSlot, error)
 	ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error)
 }

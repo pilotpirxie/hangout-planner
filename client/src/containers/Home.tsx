@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Collapse } from "../components/Collapse";
 import { Modal } from "../components/Modal";
 import { QuickSlotGenerator } from "../components/QuickSlotGenerator";
@@ -8,7 +9,6 @@ import { useCreateCalendarMutation, useCreateCalendarTimeSlotsMutation } from ".
 import { useHangoutForm } from "../hooks/useHangoutForm";
 import { useQuickSlotModal } from "../hooks/useQuickSlotModal";
 import { useTimeSlotModal } from "../hooks/useTimeSlotModal";
-import type { TimeSlot } from "../types";
 
 export const Home = () => {
   const [title, setTitle] = useState("");
@@ -16,6 +16,8 @@ export const Home = () => {
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [acceptResponsesUntil, setAcceptResponsesUntil] = useState("");
+
+  const navigate = useNavigate();
 
   const {
     timeSlots,
@@ -39,21 +41,17 @@ export const Home = () => {
   } = useTimeSlotModal();
 
   const {
-    isQuickModalOpen,
-    quickData,
-    setQuickData,
-    handleOpenQuickModal,
-    handleCloseQuickModal,
+    isQuickSlotModalOpen,
+    quickSlotModalData,
+    setQuickSlotModalData,
+    handleOpenQuickSlotModal,
+    handleCloseQuickSlotModal,
     handleGenerateQuickSlots,
-    isQuickFormValid,
+    isQuickSlotFormValid,
   } = useQuickSlotModal();
 
-  const handleEditTimeSlot = (slot: TimeSlot) => {
-    handleOpenEditModal(slot);
-  };
-
-  const [createCalendar, { isLoading: _isLoading }] = useCreateCalendarMutation();
-  const [createCalendarTimeSlots, { isLoading: _isCreatingTimeSlots }] = useCreateCalendarTimeSlotsMutation();
+  const [createCalendar, { isLoading: isCreatingCalendar }] = useCreateCalendarMutation();
+  const [createCalendarTimeSlots, { isLoading: isCreatingTimeSlots }] = useCreateCalendarTimeSlotsMutation();
   const handleCreateCalendar = async () => {
     try {
       if (password.length > 0 && password.length < 3) {
@@ -77,12 +75,12 @@ export const Home = () => {
       }
 
       if (acceptResponsesUntil && isNaN(Date.parse(acceptResponsesUntil))) {
-        alert("Accept responses until must be a valid date.");
+        alert("Accept responses until must be a valid date or blank.");
         return;
       }
 
       const calendar = await createCalendar({
-        title: title || "Hangout",
+        title: title,
         description,
         location,
         accept_responses_until: acceptResponsesUntil,
@@ -91,11 +89,14 @@ export const Home = () => {
 
       await createCalendarTimeSlots({
         calendar_id: calendar.id,
+        admin_token: calendar.admin_token,
         time_slots: timeSlots.map(slot => ({
           start_date: slot.startDate,
           end_date: slot.endDate,
         })),
       }).unwrap();
+
+      void navigate(`/calendar/${calendar.id}`);
     } catch (err) {
       console.error("Failed to create calendar:", err);
     }
@@ -127,7 +128,7 @@ export const Home = () => {
                 title={editingId ? "Edit time slot" : "Add time slot"}
                 isVisible={isModalOpen}
                 onClose={handleCloseModal}
-                onConfirm={() => { handleSaveTimeSlot(addTimeSlot, updateTimeSlot); }}
+                onConfirm={() => { handleSaveTimeSlot(editingId ? updateTimeSlot : addTimeSlot); }}
                 confirmText={editingId ? "Save" : "Add"}
                 isConfirmDisabled={!isFormValid}>
                 <TimeSlotForm
@@ -148,45 +149,46 @@ export const Home = () => {
 
               <Modal
                 title="Create quick slots"
-                isVisible={isQuickModalOpen}
-                onClose={handleCloseQuickModal}
+                isVisible={isQuickSlotModalOpen}
+                onClose={handleCloseQuickSlotModal}
                 onConfirm={() => { handleGenerateQuickSlots(addTimeSlots); }}
                 confirmText="Generate"
-                isConfirmDisabled={!isQuickFormValid}>
+                isConfirmDisabled={!isQuickSlotFormValid}>
                 <QuickSlotGenerator
-                  startDate={quickData.startDate}
-                  endDate={quickData.endDate}
-                  dailyStartTime={quickData.dailyStartTime}
-                  dailyEndTime={quickData.dailyEndTime}
-                  duration={quickData.duration}
-                  isOverlapping={quickData.isOverlapping}
-                  isWholeDay={quickData.isWholeDay}
+                  startDate={quickSlotModalData.startDate}
+                  endDate={quickSlotModalData.endDate}
+                  dailyStartTime={quickSlotModalData.dailyStartTime}
+                  dailyEndTime={quickSlotModalData.dailyEndTime}
+                  duration={quickSlotModalData.duration}
+                  isOverlapping={quickSlotModalData.isOverlapping}
+                  isWholeDay={quickSlotModalData.isWholeDay}
                   onStartDateChange={(startDate) => {
-                    setQuickData(prev => ({ ...prev, startDate }));
+                    setQuickSlotModalData(prev => ({ ...prev, startDate }));
                   }}
                   onEndDateChange={(endDate) => {
-                    setQuickData(prev => ({ ...prev, endDate }));
+                    setQuickSlotModalData(prev => ({ ...prev, endDate }));
                   }}
                   onDailyStartTimeChange={(dailyStartTime) => {
-                    setQuickData(prev => ({ ...prev, dailyStartTime }));
+                    setQuickSlotModalData(prev => ({ ...prev, dailyStartTime }));
                   }}
                   onDailyEndTimeChange={(dailyEndTime) => {
-                    setQuickData(prev => ({ ...prev, dailyEndTime }));
+                    setQuickSlotModalData(prev => ({ ...prev, dailyEndTime }));
                   }}
                   onDurationChange={(duration) => {
-                    setQuickData(prev => ({ ...prev, duration }));
+                    setQuickSlotModalData(prev => ({ ...prev, duration }));
                   }}
                   onOverlappingChange={(isOverlapping) => {
-                    setQuickData(prev => ({ ...prev, isOverlapping }));
+                    setQuickSlotModalData(prev => ({ ...prev, isOverlapping }));
                   }}
                   onWholeDayChange={(isWholeDay) => {
-                    setQuickData(prev => ({ ...prev, isWholeDay }));
+                    setQuickSlotModalData(prev => ({ ...prev, isWholeDay }));
                   }}
                 />
               </Modal>
 
               <div className="mt-3">
                 <button
+                  disabled={isCreatingCalendar || isCreatingTimeSlots}
                   className="btn btn-primary w-100"
                   onClick={() => { void handleCreateCalendar(); }}>
                   Create a new hangout
@@ -205,7 +207,7 @@ export const Home = () => {
                           <i className="ri-add-line" /> Add
                         </button>
                         <button
-                          onClick={handleOpenQuickModal}
+                          onClick={handleOpenQuickSlotModal}
                           className="btn btn-sm btn-success">
                           <i className="ri-flashlight-line" /> Quick slots
                         </button>
@@ -223,7 +225,7 @@ export const Home = () => {
                       <TimeSlotList
                         timeSlots={timeSlots}
                         onDelete={handleDeleteTimeSlot}
-                        onEdit={handleEditTimeSlot}
+                        onEdit={handleOpenEditModal}
                       />
                     </div>
                   </div>

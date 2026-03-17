@@ -10,9 +10,9 @@ type Handler struct {
 	CalendarService *services.CalendarService
 }
 
-func New(database *db.DB) *Handler {
+func New(database *db.DB, passwordManager *services.PasswordManager) *Handler {
 	return &Handler{
 		DB:              database,
-		CalendarService: services.NewCalendarService(database.Queries),
+		CalendarService: services.NewCalendarService(database.Queries, passwordManager),
 	}
 }

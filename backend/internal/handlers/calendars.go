@@ -17,13 +17,14 @@ type CreateCalendarRequest struct {
 
 type CreateCalendarResponse struct {
 	ID string `json:"id"`
+	AdminToken string `json:"admin_token"`
 }
 
 func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 	var requestBody CreateCalendarRequest
 
 	if parsingError := ParseRequest(r, RequestOptions{Body: &requestBody}); parsingError != nil {
-		RespondError(w, http.StatusBadRequest, parsingError.Error())
+		RespondError(w, http.StatusBadRequest, parsingError.Error(), nil)
 		return
 	}
 
@@ -31,25 +32,28 @@ func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request)
 		Title:       requestBody.Title,
 		Description: requestBody.Description,
 		Location:    requestBody.Location,
+		AcceptResponsesUntil: nil,
+		Password: requestBody.Password,
 	}
 
 	if requestBody.AcceptResponsesUntil != nil {
 		parsedTime, timeParsingError := time.Parse(time.RFC3339, *requestBody.AcceptResponsesUntil)
 		if timeParsingError != nil {
-			RespondError(w, http.StatusBadRequest, "Invalid time format for accept_responses_until, expected RFC3339")
+			RespondError(w, http.StatusBadRequest, "Invalid time format for accept_responses_until, expected RFC3339", &timeParsingError)
 			return
 		}
 		serviceInput.AcceptResponsesUntil = &parsedTime
 	}
 
-	calendarID, creationError := h.CalendarService.CreateCalendar(r.Context(), serviceInput)
+	calendarRow, creationError := h.CalendarService.CreateCalendar(r.Context(), serviceInput)
 	if creationError != nil {
-		RespondError(w, http.StatusInternalServerError, "Failed to create calendar")
+		RespondError(w, http.StatusInternalServerError, "Failed to create calendar", &creationError)
 		return
 	}
 
 	RespondJSON(w, http.StatusCreated, CreateCalendarResponse{
-		ID: utils.UUIDToString(calendarID),
+		ID: utils.UUIDToString(calendarRow.ID),
+		AdminToken: calendarRow.AdminToken,
 	})
 }
 
@@ -59,7 +63,8 @@ type CalendarTimeSlots struct {
 }
 
 type CreateCalendarTimeSlotsRequest struct {
-	TimeSlots []CalendarTimeSlots `json:"time_slots" validate:"required,dive,required"`
+	AdminToken string              `json:"admin_token" validate:"required"`
+	TimeSlots  []CalendarTimeSlots `json:"time_slots" validate:"required,dive,required"`
 }
 
 func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -68,13 +73,19 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 	var requestBody CreateCalendarTimeSlotsRequest
 
 	if parsingError := ParseRequest(r, RequestOptions{Body: &requestBody}); parsingError != nil {
-		RespondError(w, http.StatusBadRequest, parsingError.Error())
+		RespondError(w, http.StatusBadRequest, parsingError.Error(), &parsingError)
 		return
 	}
 
 	calendarUUID, uuidError := utils.StringToUUID(calendarID)
 	if uuidError != nil {
-		RespondError(w, http.StatusBadRequest, "Invalid calendar ID")
+		RespondError(w, http.StatusBadRequest, "Invalid calendar ID", &uuidError)
+		return
+	}
+
+	adminTokenErr := h.CalendarService.VerifyCalendarAdminToken(r.Context(), calendarUUID, requestBody.AdminToken)
+	if adminTokenErr != nil {
+		RespondError(w, http.StatusUnauthorized, "Invalid admin token", &adminTokenErr)
 		return
 	}
 
@@ -84,7 +95,7 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 		endTime, _ := time.Parse(time.RFC3339, slot.EndDate)
 
 		if !endTime.After(startTime) {
-			RespondError(w, http.StatusBadRequest, "end_date must be after start_date")
+			RespondError(w, http.StatusBadRequest, "end_date must be after start_date", nil)
 			return
 		}
 
@@ -101,9 +112,27 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 
 	creationError := h.CalendarService.CreateCalendarTimeSlots(r.Context(), serviceInput)
 	if creationError != nil {
-		RespondError(w, http.StatusInternalServerError, "Failed to create calendar time slots")
+		RespondError(w, http.StatusInternalServerError, "Failed to create calendar time slots", &creationError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
+	calendarID := r.PathValue("calendar_id")
+
+	calendarUUID, uuidError := utils.StringToUUID(calendarID)
+	if uuidError != nil {
+		RespondError(w, http.StatusBadRequest, "Invalid calendar ID", &uuidError)
+		return
+	}
+
+	calendar, retrievalError := h.CalendarService.GetCalendar(r.Context(), calendarUUID)
+	if retrievalError != nil {
+		RespondError(w, http.StatusInternalServerError, "Failed to retrieve calendar", &retrievalError)
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, calendar)
 }

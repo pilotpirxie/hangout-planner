@@ -8,8 +8,8 @@ export const useHangoutForm = () => {
     setTimeSlots(prev => [...prev, slot]);
   };
 
-  const updateTimeSlot = (id: string, updatedSlot: TimeSlot) => {
-    setTimeSlots(prev => prev.map(slot => slot.id === id ? updatedSlot : slot));
+  const updateTimeSlot = (updatedSlot: TimeSlot) => {
+    setTimeSlots(prev => prev.map(slot => slot.id === updatedSlot.id ? updatedSlot : slot));
   };
 
   const addTimeSlots = (slots: TimeSlot[]) => {

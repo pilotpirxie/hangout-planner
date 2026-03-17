@@ -20,8 +20,11 @@ func RespondJSON(w http.ResponseWriter, status int, data any) {
 	}
 }
 
-func RespondError(w http.ResponseWriter, status int, message string) {
+func RespondError(w http.ResponseWriter, status int, message string, err *error) {
 	RespondJSON(w, status, map[string]any{"error": message})
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func ToJSON(value any) string {

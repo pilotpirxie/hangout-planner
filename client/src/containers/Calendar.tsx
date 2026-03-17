@@ -1,24 +1,27 @@
 import dayjs from "dayjs";
 import { useState } from "react";
+import { useParams } from "react-router";
 import { CalendarHeader } from "../components/CalendarHeader";
 import { DaySlotsModal } from "../components/DaySlotsModal";
 import { MonthGridView } from "../components/MonthGridView";
 import { TimeSlotConfirmationModal } from "../components/TimeSlotConfirmationModal";
 import { WeekView } from "../components/WeekView";
+import { calendarsApi } from "../data/calendarsApi";
 import { useMockTimeSlots } from "../hooks/useMockTimeSlots";
 import { useTimeSlotSelection } from "../hooks/useTimeSlotSelection";
 import type { TimeSlot } from "../types";
 
-type ViewMode = "week" | "month";
-
 export const Calendar = () => {
-  const [viewMode, setViewMode] = useState<ViewMode>("week");
+  const [viewMode, setViewMode] = useState<"week" | "month">("week");
   const [currentWeek, setCurrentWeek] = useState(dayjs().toDate());
   const [currentMonth, setCurrentMonth] = useState(dayjs().toDate());
   const [selectedDaySlots, setSelectedDaySlots] = useState<TimeSlot[] | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
   const timeSlots = useMockTimeSlots();
+
+  const params = useParams<{ id: string }>();
+  const { data: calendar } = calendarsApi.useGetCalendarQuery({ calendar_id: params.id });
 
   const {
     selectedTimeSlotId,

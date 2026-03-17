@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 	"meeting-planner/backend/internal/db"
 	"meeting-planner/backend/internal/handlers"
 	"meeting-planner/backend/internal/middleware"
+	"meeting-planner/backend/internal/services"
 
 	"github.com/joho/godotenv"
 )
@@ -35,7 +37,9 @@ func main() {
 	}
 	defer database.Close()
 
-	handlerInstance := handlers.New(database)
+	passwordManager := services.NewPasswordManager(600000, 32, sha256.New)
+
+	handlerInstance := handlers.New(database, passwordManager)
 	routeMux := setupRoutes(handlerInstance)
 
 	wrappedHandler := middleware.Recovery(middleware.Logging(middleware.CORS(routeMux)))
@@ -93,7 +97,7 @@ func setupRoutes(handlerInstance *handlers.Handler) *http.ServeMux {
 
 	routeMux.HandleFunc("POST /api/calendars", handlerInstance.CreateCalendarEndpoint)
 	routeMux.HandleFunc("POST /api/calendars/{calendar_id}/time-slots", handlerInstance.CreateCalendarTimeSlotsEndpoint)
-	// routeMux.HandleFunc("GET /api/calendars/{id}", handlerInstance.GetCalendar)
+	routeMux.HandleFunc("GET /api/calendars/{calendar_id}", handlerInstance.GetCalendarEndpoint)
 
 	setupStaticFileServer(routeMux)
 

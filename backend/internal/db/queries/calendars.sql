@@ -4,16 +4,37 @@ INSERT INTO calendars (
   description,
   location,
   accept_responses_until,
-  password
+  password,
+  salt,
+  admin_token
 )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id;
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, admin_token;
 
 -- name: GetCalendarByID :one
-SELECT *
+SELECT 
+  id, 
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
 FROM calendars
 WHERE id = $1;
 
--- name: DeleteCalendarByID :exec
+-- name: GetCalendarByIDAndAdminToken :one
+SELECT 
+  id, 
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
+FROM calendars
+WHERE id = $1 AND admin_token = $2;
+
+-- name: DeleteCalendarByIDAndAdminToken :exec
 DELETE FROM calendars
-WHERE id = $1;
+WHERE id = $1 AND admin_token = $2;

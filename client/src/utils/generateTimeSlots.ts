@@ -4,16 +4,6 @@ import type { TimeSlot } from "../types";
 
 dayjs.extend(isSameOrBefore);
 
-interface GenerateTimeSlotsParams {
-  startDate: string;
-  endDate: string;
-  dailyStartTime: string;
-  dailyEndTime: string;
-  duration: string;
-  isOverlapping: boolean;
-  isWholeDay: boolean;
-}
-
 export const generateTimeSlots = ({
   startDate,
   endDate,
@@ -22,7 +12,15 @@ export const generateTimeSlots = ({
   duration,
   isOverlapping,
   isWholeDay,
-}: GenerateTimeSlotsParams): TimeSlot[] => {
+}: {
+  startDate: string;
+  endDate: string;
+  dailyStartTime: string;
+  dailyEndTime: string;
+  duration: string;
+  isOverlapping: boolean;
+  isWholeDay: boolean;
+}): TimeSlot[] => {
   const generated: TimeSlot[] = [];
   const start = dayjs(startDate);
   const end = dayjs(endDate);
@@ -42,7 +40,9 @@ export const generateTimeSlots = ({
   }
 
   const durationHours = parseFloat(duration);
-  const intervalHours = isOverlapping ? durationHours / 2 : durationHours;
+  const intervalHours = isOverlapping
+    ? durationHours / 2
+    : durationHours;
 
   const [dailyStartHour, dailyStartMin] = dailyStartTime.split(":").map(Number);
   const [dailyEndHour, dailyEndMin] = dailyEndTime.split(":").map(Number);

@@ -35,31 +35,16 @@ export const useTimeSlotModal = () => {
   };
 
   const handleSaveTimeSlot = (
-    onAdd: (slot: TimeSlot) => void,
-    onUpdate: (id: string, slot: TimeSlot) => void
+    onSave: (slot: TimeSlot) => void,
   ) => {
-    const startDate = `${modalData.date}T${modalData.startTime}:00`;
-    const endDate = `${modalData.date}T${modalData.endTime}:00`;
+    onSave({
+      id: editingId || crypto.randomUUID(),
+      startDate: `${modalData.date}T${modalData.startTime}:00`,
+      endDate: `${modalData.date}T${modalData.endTime}:00`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
 
-    if (editingId) {
-      const updatedSlot: TimeSlot = {
-        id: editingId,
-        startDate,
-        endDate,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      onUpdate(editingId, updatedSlot);
-    } else {
-      const newSlot: TimeSlot = {
-        id: crypto.randomUUID(),
-        startDate,
-        endDate,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      onAdd(newSlot);
-    }
     handleCloseModal();
   };
 

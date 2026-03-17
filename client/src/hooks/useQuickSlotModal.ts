@@ -3,8 +3,8 @@ import type { TimeSlot } from "../types";
 import { generateTimeSlots } from "../utils/generateTimeSlots";
 
 export const useQuickSlotModal = () => {
-  const [isQuickModalOpen, setIsQuickModalOpen] = useState(false);
-  const [quickData, setQuickData] = useState({
+  const [isQuickSlotModalOpen, setIsQuickSlotModalOpen] = useState(false);
+  const [quickSlotModalData, setQuickSlotModalData] = useState({
     startDate: "",
     endDate: "",
     dailyStartTime: "",
@@ -14,8 +14,8 @@ export const useQuickSlotModal = () => {
     isWholeDay: false,
   });
 
-  const handleOpenQuickModal = () => {
-    setQuickData({
+  const handleOpenQuickSlotModal = () => {
+    setQuickSlotModalData({
       startDate: "",
       endDate: "",
       dailyStartTime: "",
@@ -24,43 +24,34 @@ export const useQuickSlotModal = () => {
       isOverlapping: true,
       isWholeDay: false,
     });
-    setIsQuickModalOpen(true);
+    setIsQuickSlotModalOpen(true);
   };
 
-  const handleCloseQuickModal = () => {
-    setIsQuickModalOpen(false);
-    setQuickData({
-      startDate: "",
-      endDate: "",
-      dailyStartTime: "",
-      dailyEndTime: "",
-      duration: "",
-      isOverlapping: true,
-      isWholeDay: false,
-    });
+  const handleCloseQuickSlotModal = () => {
+    setIsQuickSlotModalOpen(false);
   };
 
   const handleGenerateQuickSlots = (onGenerate: (slots: TimeSlot[]) => void) => {
-    const slots = generateTimeSlots(quickData);
+    const slots = generateTimeSlots(quickSlotModalData);
     onGenerate(slots);
-    handleCloseQuickModal();
+    handleCloseQuickSlotModal();
   };
 
-  const isQuickFormValid = quickData.isWholeDay
-    ? !!(quickData.startDate && quickData.endDate)
-    : !!(quickData.startDate &&
-    quickData.endDate &&
-    quickData.dailyStartTime &&
-    quickData.dailyEndTime &&
-    quickData.duration);
+  const isQuickSlotFormValid = quickSlotModalData.isWholeDay
+    ? !!(quickSlotModalData.startDate && quickSlotModalData.endDate)
+    : !!(quickSlotModalData.startDate &&
+    quickSlotModalData.endDate &&
+    quickSlotModalData.dailyStartTime &&
+    quickSlotModalData.dailyEndTime &&
+    quickSlotModalData.duration);
 
   return {
-    isQuickModalOpen,
-    quickData,
-    setQuickData,
-    handleOpenQuickModal,
-    handleCloseQuickModal,
+    isQuickSlotModalOpen,
+    quickSlotModalData,
+    setQuickSlotModalData,
+    handleOpenQuickSlotModal,
+    handleCloseQuickSlotModal,
     handleGenerateQuickSlots,
-    isQuickFormValid,
+    isQuickSlotFormValid,
   };
 };

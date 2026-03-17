@@ -17,10 +17,12 @@ INSERT INTO calendars (
   description,
   location,
   accept_responses_until,
-  password
+  password,
+  salt,
+  admin_token
 )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+RETURNING id, admin_token
 `
 
 type CreateCalendarParams struct {
@@ -29,47 +31,120 @@ type CreateCalendarParams struct {
 	Location             *string            `json:"location"`
 	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
 	Password             *string            `json:"password"`
+	Salt                 *string            `json:"salt"`
+	AdminToken           string             `json:"admin_token"`
 }
 
-func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (pgtype.UUID, error) {
+type CreateCalendarRow struct {
+	ID         pgtype.UUID `json:"id"`
+	AdminToken string      `json:"admin_token"`
+}
+
+func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) (CreateCalendarRow, error) {
 	row := q.db.QueryRow(ctx, createCalendar,
 		arg.Title,
 		arg.Description,
 		arg.Location,
 		arg.AcceptResponsesUntil,
 		arg.Password,
+		arg.Salt,
+		arg.AdminToken,
 	)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i CreateCalendarRow
+	err := row.Scan(&i.ID, &i.AdminToken)
+	return i, err
 }
 
-const deleteCalendarByID = `-- name: DeleteCalendarByID :exec
+const deleteCalendarByIDAndAdminToken = `-- name: DeleteCalendarByIDAndAdminToken :exec
 DELETE FROM calendars
-WHERE id = $1
+WHERE id = $1 AND admin_token = $2
 `
 
-func (q *Queries) DeleteCalendarByID(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteCalendarByID, id)
+type DeleteCalendarByIDAndAdminTokenParams struct {
+	ID         pgtype.UUID `json:"id"`
+	AdminToken string      `json:"admin_token"`
+}
+
+func (q *Queries) DeleteCalendarByIDAndAdminToken(ctx context.Context, arg DeleteCalendarByIDAndAdminTokenParams) error {
+	_, err := q.db.Exec(ctx, deleteCalendarByIDAndAdminToken, arg.ID, arg.AdminToken)
 	return err
 }
 
 const getCalendarByID = `-- name: GetCalendarByID :one
-SELECT id, title, description, location, accept_responses_until, password, created_at, updated_at
+SELECT 
+  id, 
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
 FROM calendars
 WHERE id = $1
 `
 
-func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (Calendar, error) {
+type GetCalendarByIDRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	Title                string             `json:"title"`
+	Description          *string            `json:"description"`
+	Location             *string            `json:"location"`
+	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalendarByIDRow, error) {
 	row := q.db.QueryRow(ctx, getCalendarByID, id)
-	var i Calendar
+	var i GetCalendarByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Title,
 		&i.Description,
 		&i.Location,
 		&i.AcceptResponsesUntil,
-		&i.Password,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getCalendarByIDAndAdminToken = `-- name: GetCalendarByIDAndAdminToken :one
+SELECT 
+  id, 
+  title,
+  description,
+  location,
+  accept_responses_until,
+  created_at,
+  updated_at
+FROM calendars
+WHERE id = $1 AND admin_token = $2
+`
+
+type GetCalendarByIDAndAdminTokenParams struct {
+	ID         pgtype.UUID `json:"id"`
+	AdminToken string      `json:"admin_token"`
+}
+
+type GetCalendarByIDAndAdminTokenRow struct {
+	ID                   pgtype.UUID        `json:"id"`
+	Title                string             `json:"title"`
+	Description          *string            `json:"description"`
+	Location             *string            `json:"location"`
+	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalendarByIDAndAdminTokenParams) (GetCalendarByIDAndAdminTokenRow, error) {
+	row := q.db.QueryRow(ctx, getCalendarByIDAndAdminToken, arg.ID, arg.AdminToken)
+	var i GetCalendarByIDAndAdminTokenRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Location,
+		&i.AcceptResponsesUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
