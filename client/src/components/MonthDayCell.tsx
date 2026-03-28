@@ -4,12 +4,10 @@ import type { MonthDayData } from "../hooks/useMonthGridData";
 import { useResponsive } from "../hooks/useResponsive";
 import type { TimeSlot } from "../types";
 
-interface MonthDayCellProps {
+export const MonthDayCell = ({ dayData, onDayClick }: {
   dayData: MonthDayData;
   onDayClick: (slots: TimeSlot[], date: string) => void;
-}
-
-export const MonthDayCell = ({ dayData, onDayClick }: MonthDayCellProps) => {
+}) => {
   const { date, slots, isCurrentMonth, dateString } = dayData;
   const dateObj: Dayjs = date;
   const dayNumber = dateObj.date();
@@ -59,7 +57,7 @@ export const MonthDayCell = ({ dayData, onDayClick }: MonthDayCellProps) => {
               <div
                 key={slot.id}
                 className="text-truncate">
-                {slot.startTime}
+                {dayjs(slot.startDate).format("HH:mm")}
               </div>
             ))}
             {slots.length > 2

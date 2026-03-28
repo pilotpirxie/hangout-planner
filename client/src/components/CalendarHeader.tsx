@@ -54,7 +54,8 @@ const NavigationControls = ({
 );
 
 export const CalendarHeader = ({
-  eventName,
+  eventTitle,
+  eventDescription,
   viewMode,
   onViewModeChange,
   currentMonth,
@@ -63,7 +64,8 @@ export const CalendarHeader = ({
   onWeekChange,
   onGoToToday,
 }: {
-  eventName: string;
+    eventTitle?: string;
+    eventDescription?: string;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   currentMonth?: Date;
@@ -86,8 +88,8 @@ export const CalendarHeader = ({
 
   return (
     <div className="rounded-top p-3 d-flex flex-column align-items-center justify-content-center">
-      <h1>{eventName}</h1>
-      <h3 className="mb-3 text-center">Choose the date that works best for you</h3>
+      <h1>{eventTitle || "Event"}</h1>
+      <h3 className="mb-3 text-center">{eventDescription || "Choose the date that works best for you"}</h3>
 
       <div className="d-flex flex-column align-items-center">
         <div className="d-flex gap-3 align-items-center">

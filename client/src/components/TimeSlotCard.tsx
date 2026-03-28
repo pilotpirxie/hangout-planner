@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { TimeSlot } from "../types";
 
 export const TimeSlotCard = ({ timeSlot, onClick }: {
@@ -8,7 +9,7 @@ export const TimeSlotCard = ({ timeSlot, onClick }: {
     <div
       className="btn btn-info mt-2 cursor-pointer"
       onClick={() => { onClick(timeSlot.id); }}>
-      <div>{timeSlot.startTime} - {timeSlot.endTime}</div>
+      <div>{dayjs(timeSlot.startDate).format("HH:mm")} - {dayjs(timeSlot.endDate).format("HH:mm")}</div>
     </div>
   );
 };

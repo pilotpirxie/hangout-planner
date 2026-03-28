@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { useState } from "react";
 import type { TimeSlot } from "../types";
 
@@ -39,10 +40,8 @@ export const useTimeSlotModal = () => {
   ) => {
     onSave({
       id: editingId || crypto.randomUUID(),
-      startDate: `${modalData.date}T${modalData.startTime}:00`,
-      endDate: `${modalData.date}T${modalData.endTime}:00`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      startDate: dayjs(`${modalData.date}T${modalData.startTime}:00`).toDate(),
+      endDate: dayjs(`${modalData.date}T${modalData.endTime}:00`).toDate(),
     });
 
     handleCloseModal();

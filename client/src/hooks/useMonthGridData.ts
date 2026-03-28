@@ -38,7 +38,10 @@ export const useMonthGridData = (
       const dateString = cellDate.format("YYYY-MM-DD");
       const isCurrentMonth = cellDate.month() === month;
 
-      const slotsForDate = timeSlots.filter(slot => slot.slotDate === dateString);
+      const slotsForDate = timeSlots.filter(slot =>
+        dayjs(slot.startDate).format("YYYY-MM-DD") === dateString
+        || dayjs(slot.endDate).format("YYYY-MM-DD") === dateString
+      );
 
       cells.push({
         date: cellDate,

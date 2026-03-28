@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import type { TimeSlot } from "../types";
 import { Modal } from "./Modal";
 
@@ -25,9 +26,8 @@ export const TimeSlotConfirmationModal = ({
       title="Are you sure?">
       <p>
         Are you sure you want to confirm the time slot on{" "}
-        <strong>{selectedTimeSlot?.slotDate}</strong> from{" "}
-        <strong>{selectedTimeSlot?.startTime}</strong> to{" "}
-        <strong>{selectedTimeSlot?.endTime}</strong>?
+        <strong>{dayjs(selectedTimeSlot?.startDate).format("DD-MM-YYYY HH:mm")}</strong> to{" "}
+        <strong>{dayjs(selectedTimeSlot?.endDate).format("DD-MM-YYYY HH:mm")}</strong>?
       </p>
       <p>
         Type your name or nickname below to confirm. It will be shared with others attending the event.

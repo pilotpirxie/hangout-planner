@@ -9,13 +9,13 @@ export const TimeSlotList = ({
   timeSlots: TimeSlot[];
   onDelete: (id: string) => void;
   onEdit: (slot: TimeSlot) => void;
-  }) => {
+}) => {
   if (timeSlots.length === 0) {
     return null;
   }
 
   const sortedSlots = [...timeSlots].sort((a, b) => {
-    return a.startDate.localeCompare(b.startDate);
+    return dayjs(a.startDate).diff(dayjs(b.startDate));
   });
 
   return (

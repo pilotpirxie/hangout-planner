@@ -26,7 +26,7 @@ export const DaySlotsModal = ({
     : "";
 
   const sortedSlots = [...slots].sort((a, b) =>
-    a.startDate.localeCompare(b.startDate)
+    dayjs(a.startDate).diff(dayjs(b.startDate))
   );
 
   return <>

@@ -12,11 +12,11 @@ type CreateCalendarRequest struct {
 	Description          *string `json:"description,omitempty" validate:"omitempty,max=1024"`
 	Location             *string `json:"location,omitempty" validate:"omitempty,max=512"`
 	AcceptResponsesUntil *string `json:"accept_responses_until,omitempty" validate:"omitempty,rfc3339"`
-	Password 					   *string `json:"password,omitempty" validate:"omitempty,min=3,max=128"`
+	Password             *string `json:"password,omitempty" validate:"omitempty,min=3,max=128"`
 }
 
 type CreateCalendarResponse struct {
-	ID string `json:"id"`
+	ID         string `json:"id"`
 	AdminToken string `json:"admin_token"`
 }
 
@@ -29,11 +29,11 @@ func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request)
 	}
 
 	serviceInput := services.CreateCalendarInput{
-		Title:       requestBody.Title,
-		Description: requestBody.Description,
-		Location:    requestBody.Location,
+		Title:                requestBody.Title,
+		Description:          requestBody.Description,
+		Location:             requestBody.Location,
 		AcceptResponsesUntil: nil,
-		Password: requestBody.Password,
+		Password:             requestBody.Password,
 	}
 
 	if requestBody.AcceptResponsesUntil != nil {
@@ -52,24 +52,24 @@ func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request)
 	}
 
 	RespondJSON(w, http.StatusCreated, CreateCalendarResponse{
-		ID: utils.UUIDToString(calendarRow.ID),
+		ID:         utils.UUIDToString(calendarRow.ID),
 		AdminToken: calendarRow.AdminToken,
 	})
 }
 
-type CalendarTimeSlots struct {
+type CalendarTimeSlotsRequest struct {
 	StartDate string `json:"start_date" validate:"required,rfc3339"`
 	EndDate   string `json:"end_date" validate:"required,rfc3339"`
 }
 
 type CreateCalendarTimeSlotsRequest struct {
-	AdminToken string              `json:"admin_token" validate:"required"`
-	TimeSlots  []CalendarTimeSlots `json:"time_slots" validate:"required,dive,required"`
+	AdminToken string                     `json:"admin_token" validate:"required"`
+	TimeSlots  []CalendarTimeSlotsRequest `json:"time_slots" validate:"required,dive,required"`
 }
 
 func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http.Request) {
 	calendarID := r.PathValue("calendar_id")
-	
+
 	var requestBody CreateCalendarTimeSlotsRequest
 
 	if parsingError := ParseRequest(r, RequestOptions{Body: &requestBody}); parsingError != nil {
@@ -89,7 +89,7 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 		return
 	}
 
-	var timeSlots []services.TimeSlotInput
+	var timeSlots []services.CreateTimeSlotInput
 	for _, slot := range requestBody.TimeSlots {
 		startTime, _ := time.Parse(time.RFC3339, slot.StartDate)
 		endTime, _ := time.Parse(time.RFC3339, slot.EndDate)
@@ -99,7 +99,7 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 			return
 		}
 
-		timeSlots = append(timeSlots, services.TimeSlotInput{
+		timeSlots = append(timeSlots, services.CreateTimeSlotInput{
 			StartDate: startTime,
 			EndDate:   endTime,
 		})
@@ -119,6 +119,25 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 	w.WriteHeader(http.StatusCreated)
 }
 
+type CalendarResponse struct {
+	ID                   string  `json:"id" validate:"required"`
+	Title                string  `json:"title"`
+	Description          *string `json:"description,omitempty"`
+	Location             *string `json:"location,omitempty"`
+	AcceptResponsesUntil *string `json:"accept_responses_until,omitempty"`
+}
+
+type TimeSlotResponse struct {
+	ID        string `json:"id" validate:"required"`
+	StartDate string `json:"start_date" validate:"required,rfc3339"`
+	EndDate   string `json:"end_date" validate:"required,rfc3339"`
+}
+
+type GetCalendarResponse struct {
+	Calendar  CalendarResponse   `json:"calendar" validate:"required"`
+	TimeSlots []TimeSlotResponse `json:"time_slots" validate:"required,dive,required"`
+}
+
 func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 	calendarID := r.PathValue("calendar_id")
 
@@ -134,5 +153,39 @@ func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondJSON(w, http.StatusOK, calendar)
+	timeSlots, timeSlotsError := h.CalendarService.GetTimeSlotsByCalendarID(r.Context(), calendarUUID)
+	if timeSlotsError != nil {
+		RespondError(w, http.StatusInternalServerError, "Failed to retrieve time slots", &timeSlotsError)
+		return
+	}
+
+	var timeSlotResponses []TimeSlotResponse
+	for _, slot := range timeSlots {
+		startTime := slot.StartDate.Time
+
+		endTime := slot.EndDate.Time
+
+		if !endTime.After(startTime) {
+			RespondError(w, http.StatusBadRequest, "end_date must be after start_date", nil)
+			return
+		}
+
+		timeSlotResponses = append(timeSlotResponses, TimeSlotResponse{
+			ID:        slot.ID.String(),
+			StartDate: startTime.Format(time.RFC3339),
+			EndDate:   endTime.Format(time.RFC3339),
+		})
+	}
+
+	var response GetCalendarResponse = GetCalendarResponse{
+		Calendar: CalendarResponse{
+			ID:          utils.UUIDToString(calendar.ID),
+			Title:       calendar.Title,
+			Description: calendar.Description,
+			Location:    calendar.Location,
+		},
+		TimeSlots: timeSlotResponses,
+	}
+
+	RespondJSON(w, http.StatusOK, response)
 }

@@ -3,19 +3,17 @@ import { useResponsive } from "../hooks/useResponsive";
 import type { TimeSlot } from "../types";
 import { MonthDayCell } from "./MonthDayCell";
 
-interface MonthGridViewProps {
-  timeSlots: TimeSlot[];
-  currentMonth: Date;
-  onDayClick: (slots: TimeSlot[], date: string) => void;
-}
-
 const WEEKDAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export const MonthGridView = ({
   timeSlots,
   currentMonth,
   onDayClick,
-}: MonthGridViewProps) => {
+}: {
+  timeSlots: TimeSlot[];
+  currentMonth: Date;
+  onDayClick: (slots: TimeSlot[], date: string) => void;
+}) => {
   const weeks = useMonthGridData(timeSlots, currentMonth);
   const { screenSize } = useResponsive();
 

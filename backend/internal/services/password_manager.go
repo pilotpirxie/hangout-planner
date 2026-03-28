@@ -11,20 +11,20 @@ import (
 type PasswordManager struct {
 	passwordIterations int
 	passwordKeyLength  int
-	hashAlgorithm func() hash.Hash
+	hashAlgorithm      func() hash.Hash
 }
 
 func NewPasswordManager(passwordIterations int, passwordKeyLength int, hashAlgorithm func() hash.Hash) *PasswordManager {
 	return &PasswordManager{
 		passwordIterations: passwordIterations,
 		passwordKeyLength:  passwordKeyLength,
-		hashAlgorithm: hashAlgorithm,
+		hashAlgorithm:      hashAlgorithm,
 	}
 }
 
 func (pm *PasswordManager) GenerateSalt(length int) (string, error) {
 	salt := make([]byte, length)
-	
+
 	_, err := rand.Read(salt)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate salt: %w", err)

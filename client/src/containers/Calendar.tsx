@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { CalendarHeader } from "../components/CalendarHeader";
 import { DaySlotsModal } from "../components/DaySlotsModal";
@@ -7,7 +7,6 @@ import { MonthGridView } from "../components/MonthGridView";
 import { TimeSlotConfirmationModal } from "../components/TimeSlotConfirmationModal";
 import { WeekView } from "../components/WeekView";
 import { calendarsApi } from "../data/calendarsApi";
-import { useMockTimeSlots } from "../hooks/useMockTimeSlots";
 import { useTimeSlotSelection } from "../hooks/useTimeSlotSelection";
 import type { TimeSlot } from "../types";
 
@@ -18,10 +17,18 @@ export const Calendar = () => {
   const [selectedDaySlots, setSelectedDaySlots] = useState<TimeSlot[] | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
 
-  const timeSlots = useMockTimeSlots();
-
   const params = useParams<{ id: string }>();
-  const { data: calendar } = calendarsApi.useGetCalendarQuery({ calendar_id: params.id });
+  const [getCalendar, { data: wholeCalendarDetails }] = calendarsApi.useLazyGetCalendarQuery();
+  useEffect(() => {
+    if (!params.id) return;
+    void getCalendar({ calendar_id: params.id });
+  }, [params.id, getCalendar]);
+
+  const mappedTimeSlots = wholeCalendarDetails?.time_slots.map(slot => ({
+    id: slot.id,
+    startDate: dayjs(slot.start_date).toDate(),
+    endDate: dayjs(slot.end_date).toDate(),
+  })) ?? [];
 
   const {
     selectedTimeSlotId,
@@ -31,7 +38,7 @@ export const Calendar = () => {
     handleClickTimeSlot,
     handleCloseModal,
     handleConfirm,
-  } = useTimeSlotSelection(timeSlots);
+  } = useTimeSlotSelection(mappedTimeSlots);
 
   const handleWeekChange = (direction: "prev" | "next") => {
     setCurrentWeek((prev) => {
@@ -75,13 +82,16 @@ export const Calendar = () => {
     setCurrentMonth(today);
   };
 
+  if (!wholeCalendarDetails) return <div>Loading...</div>;
+
   return (
     <div className="bg-success vh-100 overflow-auto">
       <div
         className="container py-5">
         <div className="card">
           <CalendarHeader
-            eventName="Event name"
+            eventTitle={wholeCalendarDetails.calendar.title}
+            eventDescription={wholeCalendarDetails.calendar.description}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
             currentWeek={currentWeek}
@@ -93,13 +103,13 @@ export const Calendar = () => {
           <div className="card-body px-4">
             {viewMode === "week" ? (
               <WeekView
-                timeSlots={timeSlots}
+                timeSlots={mappedTimeSlots}
                 currentWeek={currentWeek}
                 onTimeSlotClick={handleClickTimeSlot}
               />
             ) : (
               <MonthGridView
-                timeSlots={timeSlots}
+                timeSlots={mappedTimeSlots}
                 currentMonth={currentMonth}
                 onDayClick={handleDayClick}
               />

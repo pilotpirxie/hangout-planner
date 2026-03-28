@@ -10,13 +10,13 @@ import (
 )
 
 type CalendarService struct {
-	queries *sqlc.Queries
+	queries         *sqlc.Queries
 	passwordManager *PasswordManager
 }
 
 func NewCalendarService(queries *sqlc.Queries, passwordManager *PasswordManager) *CalendarService {
 	return &CalendarService{
-		queries: queries,
+		queries:         queries,
 		passwordManager: passwordManager,
 	}
 }
@@ -40,7 +40,7 @@ func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalend
 		}
 
 		var passwordHash, hashErr = s.passwordManager.HashPassword(*input.Password, salt)
-		if hashErr != nil {	
+		if hashErr != nil {
 			return sqlc.CreateCalendarRow{}, fmt.Errorf("failed to hash password: %w", hashErr)
 		}
 
@@ -77,14 +77,14 @@ func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalend
 	return calendarRow, nil
 }
 
-type TimeSlotInput struct {
+type CreateTimeSlotInput struct {
 	StartDate time.Time
 	EndDate   time.Time
 }
 
 type CreateCalendarTimeSlotsInput struct {
 	CalendarID pgtype.UUID
-	TimeSlots  []TimeSlotInput
+	TimeSlots  []CreateTimeSlotInput
 }
 
 func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input CreateCalendarTimeSlotsInput) error {
@@ -129,4 +129,12 @@ func (s *CalendarService) VerifyCalendarAdminToken(ctx context.Context, calendar
 	}
 
 	return nil
+}
+
+func (s *CalendarService) GetTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]sqlc.CalendarTimeSlot, error) {
+	timeSlots, retrievalError := s.queries.GetCalendarTimeSlotsByCalendarID(ctx, calendarID)
+	if retrievalError != nil {
+		return nil, fmt.Errorf("failed to retrieve time slots: %w", retrievalError)
+	}
+	return timeSlots, nil
 }

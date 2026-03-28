@@ -60,13 +60,20 @@ export const calendarsApi = emptyApi.injectEndpoints({
       }),
     }),
     getCalendar: builder.query<{
-      id: string;
-      title: string;
-      description?: string;
-      location?: string;
-      accept_responses_until?: string;
-      created_at: string;
-      updated_at: string;
+      calendar: {
+        id: string;
+        title: string;
+        description?: string;
+        location?: string;
+        acceptResponsesUntil?: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+      time_slots: {
+        id: string;
+        start_date: string;
+        end_date: string;
+      }[];
     }, {
       calendar_id: string;
     }>({

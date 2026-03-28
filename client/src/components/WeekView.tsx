@@ -33,7 +33,7 @@ export const WeekView = ({
         {weekDays.map((dayData) => {
           const isToday = dayjs().isSame(dayData.date, "day");
           const sortedSlots = [...dayData.slots].sort((a, b) =>
-            a.startDate.localeCompare(b.startDate)
+            dayjs(a.startDate).diff(dayjs(b.startDate))
           );
 
           const formattedDate = screenSize === "desktop"
@@ -45,9 +45,7 @@ export const WeekView = ({
               key={dayData.dateString}
               className={`card ${isToday ? "border-primary border-2" : ""}`}>
               <div
-                className={`card-header text-center fw-bold ${
-                  isToday ? "bg-white text-primary" : ""
-                }`}>
+                className={`card-header text-center fw-bold ${isToday ? "bg-white text-primary" : ""}`}>
                 <div>{dayData.dayName}</div>
                 <div className="fs-5">{formattedDate}</div>
               </div>

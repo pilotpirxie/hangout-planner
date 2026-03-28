@@ -3,15 +3,13 @@ export interface Calendar {
   title: string;
   description?: string;
   location?: string;
-  acceptResponsesUntil?: string;
-  createdAt: string;
-  updatedAt: string;
+  acceptResponsesUntil?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface TimeSlot {
   id: string;
-  startDate: string;
-  endDate: string;
-  createdAt: string;
-  updatedAt: string;
+  startDate: Date;
+  endDate: Date;
 }

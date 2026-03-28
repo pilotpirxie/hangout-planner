@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "build:copy": "tsc -b && vite build && rm -rf ../backend/public && mkdir -p ../backend/public && cp -R dist/. ../backend/public/",
     "preview": "vite preview",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx && tsc -b",
     "fix": "eslint . --ext .ts,.tsx --fix",
     "knip": "knip"
   },

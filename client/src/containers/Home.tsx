@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Collapse } from "../components/Collapse";
@@ -91,8 +92,8 @@ export const Home = () => {
         calendar_id: calendar.id,
         admin_token: calendar.admin_token,
         time_slots: timeSlots.map(slot => ({
-          start_date: slot.startDate,
-          end_date: slot.endDate,
+          start_date: dayjs(slot.startDate).toISOString(),
+          end_date: dayjs(slot.endDate).toISOString(),
         })),
       }).unwrap();
 

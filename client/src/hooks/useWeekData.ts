@@ -32,7 +32,10 @@ export const useWeekData = (
       const dayName = dayNames[dayIndex === 0 ? 6 : dayIndex - 1];
       const dayNumber = date.date();
 
-      const slotsForDate = timeSlots.filter(slot => slot.slotDate === dateString);
+      const slotsForDate = timeSlots.filter(slot =>
+        dayjs(slot.startDate).format("YYYY-MM-DD") === dateString
+        || dayjs(slot.endDate).format("YYYY-MM-DD") === dateString
+      );
 
       weekDays.push({
         date,
