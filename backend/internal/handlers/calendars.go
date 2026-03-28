@@ -45,7 +45,7 @@ func (h *Handler) CreateCalendarEndpoint(w http.ResponseWriter, r *http.Request)
 		serviceInput.AcceptResponsesUntil = &parsedTime
 	}
 
-	calendarRow, creationError := h.CalendarService.CreateCalendar(r.Context(), serviceInput)
+	calendarRow, creationError := h.CalendarService.CreateCalendar(r.Context(), &serviceInput)
 	if creationError != nil {
 		RespondError(w, http.StatusInternalServerError, "Failed to create calendar", &creationError)
 		return
@@ -89,7 +89,7 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 		return
 	}
 
-	var timeSlots []services.CreateTimeSlotInput
+	timeSlots := make([]services.CreateTimeSlotInput, 0, len(requestBody.TimeSlots))
 	for _, slot := range requestBody.TimeSlots {
 		startTime, _ := time.Parse(time.RFC3339, slot.StartDate)
 		endTime, _ := time.Parse(time.RFC3339, slot.EndDate)
@@ -110,7 +110,7 @@ func (h *Handler) CreateCalendarTimeSlotsEndpoint(w http.ResponseWriter, r *http
 		TimeSlots:  timeSlots,
 	}
 
-	creationError := h.CalendarService.CreateCalendarTimeSlots(r.Context(), serviceInput)
+	creationError := h.CalendarService.CreateCalendarTimeSlots(r.Context(), &serviceInput)
 	if creationError != nil {
 		RespondError(w, http.StatusInternalServerError, "Failed to create calendar time slots", &creationError)
 		return
@@ -159,7 +159,7 @@ func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var timeSlotResponses []TimeSlotResponse
+	timeSlotResponses := make([]TimeSlotResponse, 0, len(timeSlots))
 	for _, slot := range timeSlots {
 		startTime := slot.StartDate.Time
 
@@ -177,7 +177,7 @@ func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	var response GetCalendarResponse = GetCalendarResponse{
+	response := GetCalendarResponse{
 		Calendar: CalendarResponse{
 			ID:          utils.UUIDToString(calendar.ID),
 			Title:       calendar.Title,

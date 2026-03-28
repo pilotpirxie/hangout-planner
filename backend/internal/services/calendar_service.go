@@ -29,7 +29,7 @@ type CreateCalendarInput struct {
 	Password             *string
 }
 
-func (s *CalendarService) CreateCalendar(ctx context.Context, input CreateCalendarInput) (sqlc.CreateCalendarRow, error) {
+func (s *CalendarService) CreateCalendar(ctx context.Context, input *CreateCalendarInput) (sqlc.CreateCalendarRow, error) {
 	var calendarPassword *string
 	var calendarSalt *string
 
@@ -87,7 +87,7 @@ type CreateCalendarTimeSlotsInput struct {
 	TimeSlots  []CreateTimeSlotInput
 }
 
-func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input CreateCalendarTimeSlotsInput) error {
+func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input *CreateCalendarTimeSlotsInput) error {
 	for _, slot := range input.TimeSlots {
 		queryParams := sqlc.CreateCalendarTimeSlotParams{
 			CalendarID: input.CalendarID,
