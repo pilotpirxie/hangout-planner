@@ -16,13 +16,30 @@ export const Calendar = () => {
   const [currentMonth, setCurrentMonth] = useState(dayjs().toDate());
   const [selectedDaySlots, setSelectedDaySlots] = useState<TimeSlot[] | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
-
+  const [isPasswordProtected, setIsPasswordProtected] = useState<boolean | null>(null);
+  const [password, setPassword] = useState<string>("");
   const params = useParams<{ id: string }>();
-  const [getCalendar, { data: wholeCalendarDetails }] = calendarsApi.useLazyGetCalendarQuery();
+
+  const [checkIfPasswordProtected] = calendarsApi.useLazyCheckIfCalendarPasswordProtectedQuery();
   useEffect(() => {
     if (!params.id) return;
+    checkIfPasswordProtected({ calendar_id: params.id }).then(({ data }) => {
+      setIsPasswordProtected(data?.is_password_protected ?? false);
+    }).catch(() => {
+      console.error("Failed to check if calendar is password protected");
+    });
+  }, [params.id, checkIfPasswordProtected]);
+
+  const [getCalendar, { data: wholeCalendarDetails }] = calendarsApi.useLazyGetCalendarQuery();
+  useEffect(() => {
+    if (!params.id || isPasswordProtected === null || isPasswordProtected) return;
     void getCalendar({ calendar_id: params.id });
-  }, [params.id, getCalendar]);
+  }, [params.id, getCalendar, password, isPasswordProtected]);
+
+  const handleGetCalendarManually = () => {
+    if (!params.id) return;
+    void getCalendar({ calendar_id: params.id, password });
+  };
 
   const mappedTimeSlots = wholeCalendarDetails?.time_slots.map(slot => ({
     id: slot.id,
@@ -38,7 +55,7 @@ export const Calendar = () => {
     handleClickTimeSlot,
     handleCloseModal,
     handleConfirm,
-  } = useTimeSlotSelection(mappedTimeSlots);
+  } = useTimeSlotSelection(mappedTimeSlots, params.id);
 
   const handleWeekChange = (direction: "prev" | "next") => {
     setCurrentWeek((prev) => {
@@ -81,6 +98,30 @@ export const Calendar = () => {
     setCurrentWeek(today);
     setCurrentMonth(today);
   };
+
+  if (isPasswordProtected && !wholeCalendarDetails) {
+    return (
+      <div className="bg-success vh-100 d-flex flex-column justify-content-center align-items-center">
+        <h2 className="mb-4">This calendar is password protected</h2>
+        <div
+          className="input-group mb-3"
+          style={{ maxWidth: "400px" }}>
+          <input
+            type="password"
+            className="form-control"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); }}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={() => { handleGetCalendarManually(); }}>
+            Submit
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!wholeCalendarDetails) return <div>Loading...</div>;
 

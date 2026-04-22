@@ -38,3 +38,10 @@ WHERE id = $1 AND admin_token = $2;
 -- name: DeleteCalendarByIDAndAdminToken :exec
 DELETE FROM calendars
 WHERE id = $1 AND admin_token = $2;
+
+-- name: GetCalendarPasswordAndSaltByID :one
+SELECT 
+  password,
+  salt
+FROM calendars
+WHERE id = $1;

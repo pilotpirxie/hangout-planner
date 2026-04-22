@@ -18,14 +18,14 @@ export const QuickSlotGenerator = ({
   endDate: string;
   dailyStartTime: string;
   dailyEndTime: string;
-  duration: string;
+  duration: number;
   isOverlapping: boolean;
   isWholeDay: boolean;
   onStartDateChange: (date: string) => void;
   onEndDateChange: (date: string) => void;
   onDailyStartTimeChange: (time: string) => void;
   onDailyEndTimeChange: (time: string) => void;
-  onDurationChange: (duration: string) => void;
+  onDurationChange: (duration: number) => void;
   onOverlappingChange: (isOverlapping: boolean) => void;
   onWholeDayChange: (isWholeDay: boolean) => void;
 }) => {
@@ -125,7 +125,7 @@ export const QuickSlotGenerator = ({
             className="form-control"
             value={duration}
             onChange={(e) => {
-              onDurationChange(e.target.value);
+              onDurationChange(parseFloat(e.target.value));
             }}>
             <option value="">Select duration</option>
             <option value="0.5">30 minutes</option>

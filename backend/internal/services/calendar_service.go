@@ -138,3 +138,30 @@ func (s *CalendarService) GetTimeSlotsByCalendarID(ctx context.Context, calendar
 	}
 	return timeSlots, nil
 }
+
+func (s *CalendarService) IsCalendarPasswordProtected(ctx context.Context, calendarID pgtype.UUID) (bool, error) {
+	password, retrievalError := s.queries.GetCalendarPasswordAndSaltByID(ctx, calendarID)
+	if retrievalError != nil {
+		return false, fmt.Errorf("failed to check if calendar is password protected: %w", retrievalError)
+	}
+
+	return password.Password != nil && *password.Password != "", nil
+}
+
+func (s *CalendarService) VerifyCalendarPassword(ctx context.Context, calendarID pgtype.UUID, password string) (bool, error) {
+	storedCredentials, retrievalError := s.queries.GetCalendarPasswordAndSaltByID(ctx, calendarID)
+	if retrievalError != nil {
+		return false, fmt.Errorf("failed to retrieve calendar password: %w", retrievalError)
+	}
+
+	if storedCredentials.Password == nil || *storedCredentials.Password == "" {
+		return false, fmt.Errorf("calendar is not password protected")
+	}
+
+	hashedPassword, hashErr := s.passwordManager.HashPassword(password, *storedCredentials.Salt)
+	if hashErr != nil {
+		return false, fmt.Errorf("failed to hash provided password: %w", hashErr)
+	}
+
+	return storedCredentials.Password != nil && *storedCredentials.Password == hashedPassword, nil
+}

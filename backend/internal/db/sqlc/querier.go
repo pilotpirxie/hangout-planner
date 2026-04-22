@@ -19,6 +19,7 @@ type Querier interface {
 	DeleteVotesByID(ctx context.Context, id pgtype.UUID) error
 	GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalendarByIDRow, error)
 	GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalendarByIDAndAdminTokenParams) (GetCalendarByIDAndAdminTokenRow, error)
+	GetCalendarPasswordAndSaltByID(ctx context.Context, id pgtype.UUID) (GetCalendarPasswordAndSaltByIDRow, error)
 	GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]CalendarTimeSlot, error)
 	ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error)
 }

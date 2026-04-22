@@ -17,7 +17,7 @@ export const generateTimeSlots = ({
   endDate: string;
   dailyStartTime: string;
   dailyEndTime: string;
-  duration: string;
+  duration: number;
   isOverlapping: boolean;
   isWholeDay: boolean;
 }): TimeSlot[] => {
@@ -30,14 +30,14 @@ export const generateTimeSlots = ({
       const dateStr = date.format("YYYY-MM-DD");
       generated.push({
         id: crypto.randomUUID(),
-        startDate: dayjs(`${dateStr}T00:00:00`).toDate(),
-        endDate: dayjs(`${dateStr}T23:59:59`).toDate(),
+        startDate: dayjs(`${dateStr}T00:00:00Z`).toDate(),
+        endDate: dayjs(`${dateStr}T23:59:59Z`).toDate(),
       });
     }
     return generated;
   }
 
-  const durationHours = parseFloat(duration);
+  const durationHours = duration;
   const intervalHours = isOverlapping
     ? durationHours / 2
     : durationHours;
@@ -61,8 +61,8 @@ export const generateTimeSlots = ({
       const startTime = `${String(startHour).padStart(2, "0")}:${String(startMin).padStart(2, "0")}`;
       const endTime = `${String(endHour).padStart(2, "0")}:${String(endMin).padStart(2, "0")}`;
 
-      const slotStart = `${dateStr}T${startTime}:00`;
-      const slotEnd = `${dateStr}T${endTime}:00`;
+      const slotStart = `${dateStr}T${startTime}:00Z`;
+      const slotEnd = `${dateStr}T${endTime}:00Z`;
 
       generated.push({
         id: crypto.randomUUID(),

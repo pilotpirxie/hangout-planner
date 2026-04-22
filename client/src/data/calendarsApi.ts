@@ -76,17 +76,37 @@ export const calendarsApi = emptyApi.injectEndpoints({
       }[];
     }, {
       calendar_id: string;
+      password?: string;
+    }>({
+      query: (arg) => {
+        const queryParams = new URLSearchParams();
+        if (arg.password) {
+          queryParams.append("password", arg.password);
+        }
+
+        return {
+          url: `/calendars/${arg.calendar_id}?${queryParams.toString()}`,
+          method: "GET",
+        };
+      },
+    }),
+    checkIfCalendarPasswordProtected: builder.query<{
+      is_password_protected: boolean
+    }, {
+      calendar_id: string
     }>({
       query: (arg) => ({
-        url: `/calendars/${arg.calendar_id}`,
+        url: `/calendars/${arg.calendar_id}/password-protected`,
         method: "GET",
       }),
     }),
-  })
+  }),
 });
 
 export const {
   useCreateCalendarMutation,
   useCreateCalendarTimeSlotsMutation,
   useGetCalendarQuery,
+  useLazyCheckIfCalendarPasswordProtectedQuery,
+  useCheckIfCalendarPasswordProtectedQuery,
 } = calendarsApi;

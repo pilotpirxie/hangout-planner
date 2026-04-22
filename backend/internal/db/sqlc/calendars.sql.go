@@ -150,3 +150,23 @@ func (q *Queries) GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalen
 	)
 	return i, err
 }
+
+const getCalendarPasswordAndSaltByID = `-- name: GetCalendarPasswordAndSaltByID :one
+SELECT 
+  password,
+  salt
+FROM calendars
+WHERE id = $1
+`
+
+type GetCalendarPasswordAndSaltByIDRow struct {
+	Password *string `json:"password"`
+	Salt     *string `json:"salt"`
+}
+
+func (q *Queries) GetCalendarPasswordAndSaltByID(ctx context.Context, id pgtype.UUID) (GetCalendarPasswordAndSaltByIDRow, error) {
+	row := q.db.QueryRow(ctx, getCalendarPasswordAndSaltByID, id)
+	var i GetCalendarPasswordAndSaltByIDRow
+	err := row.Scan(&i.Password, &i.Salt)
+	return i, err
+}

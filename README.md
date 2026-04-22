@@ -38,3 +38,8 @@ goose up
 ```sh
 sqlc generate
 ```
+
+## How to format files
+```sh
+go fmt ./...
+```

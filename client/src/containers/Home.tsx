@@ -10,6 +10,7 @@ import { useCreateCalendarMutation, useCreateCalendarTimeSlotsMutation } from ".
 import { useHangoutForm } from "../hooks/useHangoutForm";
 import { useQuickSlotModal } from "../hooks/useQuickSlotModal";
 import { useTimeSlotModal } from "../hooks/useTimeSlotModal";
+import { generateTimeSlots } from "../utils/generateTimeSlots";
 
 export const Home = () => {
   const [title, setTitle] = useState("");
@@ -81,12 +82,26 @@ export const Home = () => {
       }
 
       const calendar = await createCalendar({
-        title: title,
+        title: title || "Hangout",
         description,
         location,
         accept_responses_until: acceptResponsesUntil,
         password
       }).unwrap();
+
+      if (timeSlots.length === 0) {
+        const newTimeSlots = generateTimeSlots({
+          dailyStartTime: "08:00",
+          dailyEndTime: "24:00",
+          duration: 1,
+          startDate: dayjs().format("YYYY-MM-DD"),
+          endDate: dayjs().add(7, "day").format("YYYY-MM-DD"),
+          isOverlapping: false,
+          isWholeDay: false,
+        });
+
+        timeSlots.push(...newTimeSlots);
+      }
 
       await createCalendarTimeSlots({
         calendar_id: calendar.id,

@@ -140,11 +140,36 @@ type GetCalendarResponse struct {
 
 func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 	calendarID := r.PathValue("calendar_id")
+	calendarPassword := r.URL.Query().Get("password")
 
 	calendarUUID, uuidError := utils.StringToUUID(calendarID)
 	if uuidError != nil {
 		RespondError(w, http.StatusBadRequest, "Invalid calendar ID", &uuidError)
 		return
+	}
+
+	isProtected, checkError := h.CalendarService.IsCalendarPasswordProtected(r.Context(), calendarUUID)
+	if checkError != nil {
+		RespondError(w, http.StatusInternalServerError, "Failed to check calendar password protection", &checkError)
+		return
+	}
+
+	if isProtected && calendarPassword == "" {
+		RespondError(w, http.StatusUnauthorized, "Password is required to access this calendar", nil)
+		return
+	}
+
+	if isProtected && calendarPassword != "" {
+		isValid, passwordErr := h.CalendarService.VerifyCalendarPassword(r.Context(), calendarUUID, calendarPassword)
+		if passwordErr != nil {
+			RespondError(w, http.StatusInternalServerError, "Failed to verify calendar password", &passwordErr)
+			return
+		}
+
+		if !isValid {
+			RespondError(w, http.StatusUnauthorized, "Invalid password for this calendar", nil)
+			return
+		}
 	}
 
 	calendar, retrievalError := h.CalendarService.GetCalendar(r.Context(), calendarUUID)
@@ -188,4 +213,28 @@ func (h *Handler) GetCalendarEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, response)
+}
+
+type CheckCalendarPasswordProtectionResponse struct {
+	IsPasswordProtected bool `json:"is_password_protected"`
+}
+
+func (h *Handler) CheckIfCalendarPasswordProtectedEndpoint(w http.ResponseWriter, r *http.Request) {
+	calendarID := r.PathValue("calendar_id")
+
+	calendarUUID, uuidError := utils.StringToUUID(calendarID)
+	if uuidError != nil {
+		RespondError(w, http.StatusBadRequest, "Invalid calendar ID", &uuidError)
+		return
+	}
+
+	isProtected, checkError := h.CalendarService.IsCalendarPasswordProtected(r.Context(), calendarUUID)
+	if checkError != nil {
+		RespondError(w, http.StatusInternalServerError, "Failed to check calendar password protection", &checkError)
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, CheckCalendarPasswordProtectionResponse{
+		IsPasswordProtected: isProtected,
+	})
 }

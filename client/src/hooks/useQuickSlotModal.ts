@@ -9,7 +9,7 @@ export const useQuickSlotModal = () => {
     endDate: "",
     dailyStartTime: "",
     dailyEndTime: "",
-    duration: "",
+    duration: 0,
     isOverlapping: true,
     isWholeDay: false,
   });
@@ -20,7 +20,7 @@ export const useQuickSlotModal = () => {
       endDate: "",
       dailyStartTime: "",
       dailyEndTime: "",
-      duration: "",
+      duration: 0,
       isOverlapping: true,
       isWholeDay: false,
     });

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import type { TimeSlot } from "../types";
 
-export const useTimeSlotSelection = (timeSlots: TimeSlot[]) => {
+export const useTimeSlotSelection = (timeSlots: TimeSlot[], calendarId: string | undefined) => {
   const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<string | null>(null);
   const [nickname, setNickname] = useState<string>("");
 
@@ -18,6 +18,8 @@ export const useTimeSlotSelection = (timeSlots: TimeSlot[]) => {
   };
 
   const handleConfirm = () => {
+    if (!selectedTimeSlotId || !nickname || !calendarId) return;
+    console.info("Confirming time slot", { calendarId, timeSlotId: selectedTimeSlotId, nickname });
     setSelectedTimeSlotId(null);
   };
 
