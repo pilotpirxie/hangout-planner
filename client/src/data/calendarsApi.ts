@@ -1,4 +1,3 @@
-import dayjs from "dayjs";
 import { emptyApi } from "./emptyApi";
 
 export const calendarsApi = emptyApi.injectEndpoints({
@@ -9,8 +8,6 @@ export const calendarsApi = emptyApi.injectEndpoints({
     }, {
       title: string;
       description?: string;
-      location?: string;
-      accept_responses_until?: string;
       password?: string;
     }>({
       query: (arg) => ({
@@ -19,11 +16,7 @@ export const calendarsApi = emptyApi.injectEndpoints({
         body: {
           title: arg.title,
           description: arg.description || undefined,
-          location: arg.location || undefined,
           password: arg.password || undefined,
-          accept_responses_until: arg.accept_responses_until
-            ? dayjs(arg.accept_responses_until).toISOString()
-            : undefined,
         }
       }),
     }),
@@ -64,8 +57,6 @@ export const calendarsApi = emptyApi.injectEndpoints({
         id: string;
         title: string;
         description?: string;
-        location?: string;
-        acceptResponsesUntil?: string;
         createdAt: string;
         updatedAt: string;
       };
@@ -100,6 +91,48 @@ export const calendarsApi = emptyApi.injectEndpoints({
         method: "GET",
       }),
     }),
+    voteOnTimeSlot: builder.mutation<undefined, {
+      calendar_id: string;
+      time_slot_id: string;
+      username: string;
+      password?: string;
+    }>({
+      query: (arg) => ({
+        url: `/calendars/${arg.calendar_id}/time-slots/${arg.time_slot_id}/votes`,
+        method: "POST",
+        body: {
+          username: arg.username,
+          password: arg.password || undefined,
+        },
+      }),
+    }),
+    getCalendarVotes: builder.query<
+      {
+        id: string;
+        calendar_id: string;
+        username: string;
+        time_slot: {
+          id: string;
+          start_date: string;
+          end_date: string;
+        };
+      }[],
+    {
+      calendar_id: string;
+      password?: string;
+    }>({
+      query: (arg) => {
+        const queryParams = new URLSearchParams();
+        if (arg.password) {
+          queryParams.append("password", arg.password);
+        }
+
+        return {
+          url: `/calendars/${arg.calendar_id}/votes?${queryParams.toString()}`,
+          method: "GET",
+        };
+      },
+    }),
   }),
 });
 
@@ -109,4 +142,6 @@ export const {
   useGetCalendarQuery,
   useLazyCheckIfCalendarPasswordProtectedQuery,
   useCheckIfCalendarPasswordProtectedQuery,
+  useVoteOnTimeSlotMutation,
+  useLazyGetCalendarVotesQuery,
 } = calendarsApi;

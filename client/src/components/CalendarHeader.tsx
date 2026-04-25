@@ -1,6 +1,6 @@
 import { formatMonthYear, formatWeekRange } from "../utils/dateFormatters";
 
-type ViewMode = "week" | "month";
+type ViewMode = "week" | "month" | "votes";
 
 const ViewModeToggle = ({
   viewMode,
@@ -23,6 +23,12 @@ const ViewModeToggle = ({
       className={`btn ${viewMode === "month" ? "btn-primary" : "btn-outline-primary"}`}
       onClick={() => { onViewModeChange("month"); }}>
       Month View
+    </button>
+    <button
+      type="button"
+      className={`btn ${viewMode === "votes" ? "btn-primary" : "btn-outline-primary"}`}
+      onClick={() => { onViewModeChange("votes"); }}>
+      Votes View
     </button>
   </div>
 );
@@ -64,8 +70,8 @@ export const CalendarHeader = ({
   onWeekChange,
   onGoToToday,
 }: {
-    eventTitle?: string;
-    eventDescription?: string;
+  eventTitle?: string;
+  eventDescription?: string;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   currentMonth?: Date;

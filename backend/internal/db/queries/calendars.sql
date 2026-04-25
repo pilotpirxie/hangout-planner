@@ -2,13 +2,11 @@
 INSERT INTO calendars (
   title,
   description,
-  location,
-  accept_responses_until,
   password,
   salt,
   admin_token
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, admin_token;
 
 -- name: GetCalendarByID :one
@@ -16,8 +14,6 @@ SELECT
   id, 
   title,
   description,
-  location,
-  accept_responses_until,
   created_at,
   updated_at
 FROM calendars
@@ -28,8 +24,6 @@ SELECT
   id, 
   title,
   description,
-  location,
-  accept_responses_until,
   created_at,
   updated_at
 FROM calendars

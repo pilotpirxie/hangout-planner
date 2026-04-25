@@ -1,20 +1,26 @@
 -- name: CreateVote :one
 INSERT INTO votes (
-  id,
   calendar_id,
   calendar_time_slot_id,
-  username,
-  created_at,
-  updated_at
+  username
 )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3)
 RETURNING *;
 
--- name: ListVotesByCalendarID :many
-SELECT id, calendar_id, calendar_time_slot_id, username, created_at
+-- name: GetVotesByCalendarID :many
+SELECT 
+  votes.id, 
+  votes.calendar_id, 
+  votes.calendar_time_slot_id, 
+  votes.username, 
+  votes.created_at, 
+  votes.updated_at, 
+  calendar_time_slots.start_date, 
+  calendar_time_slots.end_date
 FROM votes
-WHERE calendar_id = $1
-ORDER BY created_at ASC;
+LEFT JOIN calendar_time_slots ON votes.calendar_time_slot_id = calendar_time_slots.id
+WHERE votes.calendar_id = $1
+ORDER BY votes.created_at ASC;
 
 -- name: DeleteVotesByID :exec
 DELETE FROM votes

@@ -24,3 +24,12 @@
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   transform: translateY(-1px);
 }
+
+.avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  border-width: 2px;
+  border-style: solid;
+}

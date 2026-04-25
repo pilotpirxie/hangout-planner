@@ -20,8 +20,9 @@ type Querier interface {
 	GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalendarByIDRow, error)
 	GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalendarByIDAndAdminTokenParams) (GetCalendarByIDAndAdminTokenRow, error)
 	GetCalendarPasswordAndSaltByID(ctx context.Context, id pgtype.UUID) (GetCalendarPasswordAndSaltByIDRow, error)
+	GetCalendarTimeSlotByID(ctx context.Context, id pgtype.UUID) (CalendarTimeSlot, error)
 	GetCalendarTimeSlotsByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]CalendarTimeSlot, error)
-	ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error)
+	GetVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]GetVotesByCalendarIDRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -13,6 +13,6 @@ type Handler struct {
 func New(database *db.DB, passwordManager *services.PasswordManager) *Handler {
 	return &Handler{
 		DB:              database,
-		CalendarService: services.NewCalendarService(database.Queries, passwordManager),
+		CalendarService: services.NewCalendarService(database, passwordManager),
 	}
 }

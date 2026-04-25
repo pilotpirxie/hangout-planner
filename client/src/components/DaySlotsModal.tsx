@@ -61,7 +61,7 @@ export const DaySlotsModal = ({
                     onClose();
                   }}>
                   <div className="fw-bold">
-                    {dayjs(slot.startDate).format("h:mm A")} - {dayjs(slot.endDate).format("h:mm A")}
+                    {dayjs(slot.startDate).format("HH:mm")} - {dayjs(slot.endDate).format("HH:mm")}
                   </div>
                 </button>
               ))}

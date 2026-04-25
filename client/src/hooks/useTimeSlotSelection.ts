@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
+import { useVoteOnTimeSlotMutation } from "../data/calendarsApi";
 import type { TimeSlot } from "../types";
 
-export const useTimeSlotSelection = (timeSlots: TimeSlot[], calendarId: string | undefined) => {
+export const useTimeSlotSelection = (timeSlots: TimeSlot[], calendarId: string | undefined, password: string | undefined) => {
   const [selectedTimeSlotId, setSelectedTimeSlotId] = useState<string | null>(null);
-  const [nickname, setNickname] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [vote] = useVoteOnTimeSlotMutation();
 
   const selectedTimeSlot = useMemo(() => {
     return timeSlots.find(slot => slot.id === selectedTimeSlotId) ?? null;
@@ -18,16 +20,22 @@ export const useTimeSlotSelection = (timeSlots: TimeSlot[], calendarId: string |
   };
 
   const handleConfirm = () => {
-    if (!selectedTimeSlotId || !nickname || !calendarId) return;
-    console.info("Confirming time slot", { calendarId, timeSlotId: selectedTimeSlotId, nickname });
+    if (!selectedTimeSlotId || !username || !calendarId) return;
+    void vote({
+      calendar_id: calendarId,
+      time_slot_id: selectedTimeSlotId,
+      username,
+      password
+    });
     setSelectedTimeSlotId(null);
+    setUsername("");
   };
 
   return {
     selectedTimeSlotId,
     selectedTimeSlot,
-    nickname,
-    setNickname,
+    username,
+    setUsername,
     handleClickTimeSlot,
     handleCloseModal,
     handleConfirm,

@@ -27,7 +27,7 @@ func (h *Handler) EchoEndpoint(w http.ResponseWriter, r *http.Request) {
 		AuthToken string `header:"Authorization" validate:"required"`
 	}
 
-	parsingError := ParseRequest(r, RequestOptions{
+	parsingError := ParseRequest(w, r, RequestOptions{
 		Body:    &payloadBody,
 		Params:  &payloadParams,
 		Query:   &payloadQuery,

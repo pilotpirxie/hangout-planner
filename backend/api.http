@@ -19,7 +19,5 @@ Content-Type: {{contentType}}
 
 {
   "title": "Team Meeting",
-  "description": "Monthly team sync-up",
-  "location": "Conference Room A",
-  "accept_responses_until": "2026-01-01T01:01:01Z"
+  "description": "Monthly team sync-up"
 }

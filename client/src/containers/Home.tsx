@@ -16,8 +16,6 @@ export const Home = () => {
   const [title, setTitle] = useState("");
   const [password, setPassword] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
-  const [acceptResponsesUntil, setAcceptResponsesUntil] = useState("");
 
   const navigate = useNavigate();
 
@@ -71,21 +69,9 @@ export const Home = () => {
         return;
       }
 
-      if (location.length > 512) {
-        alert("Location cannot exceed 512 characters.");
-        return;
-      }
-
-      if (acceptResponsesUntil && isNaN(Date.parse(acceptResponsesUntil))) {
-        alert("Accept responses until must be a valid date or blank.");
-        return;
-      }
-
       const calendar = await createCalendar({
         title: title || "Hangout",
         description,
-        location,
-        accept_responses_until: acceptResponsesUntil,
         password
       }).unwrap();
 
@@ -270,31 +256,6 @@ export const Home = () => {
                       value={description}
                       maxLength={1024}
                       onChange={(e) => { setDescription(e.target.value); }}
-                    />
-                  </div>
-
-                  <div className="mt-3">
-                    <label htmlFor="location">Location used for weather</label>
-                    <input
-                      id="location"
-                      type="text"
-                      className="form-control"
-                      placeholder="Location"
-                      value={location}
-                      maxLength={512}
-                      onChange={(e) => { setLocation(e.target.value); }}
-                    />
-                  </div>
-
-                  <div className="mt-3">
-                    <label htmlFor="end-date">Accept responses until</label>
-                    <input
-                      id="end-date"
-                      type="date"
-                      className="form-control"
-                      placeholder="End date"
-                      value={acceptResponsesUntil}
-                      onChange={(e) => { setAcceptResponsesUntil(e.target.value); }}
                     />
                   </div>
                 </Collapse>

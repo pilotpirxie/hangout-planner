@@ -51,6 +51,32 @@ func (q *Queries) DeleteCalendarTimeSlotByID(ctx context.Context, id pgtype.UUID
 	return err
 }
 
+const getCalendarTimeSlotByID = `-- name: GetCalendarTimeSlotByID :one
+SELECT 
+  id,
+  calendar_id,
+  start_date,
+  end_date,
+  created_at,
+  updated_at
+FROM calendar_time_slots
+WHERE id = $1
+`
+
+func (q *Queries) GetCalendarTimeSlotByID(ctx context.Context, id pgtype.UUID) (CalendarTimeSlot, error) {
+	row := q.db.QueryRow(ctx, getCalendarTimeSlotByID, id)
+	var i CalendarTimeSlot
+	err := row.Scan(
+		&i.ID,
+		&i.CalendarID,
+		&i.StartDate,
+		&i.EndDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getCalendarTimeSlotsByCalendarID = `-- name: GetCalendarTimeSlotsByCalendarID :many
 SELECT 
   id,

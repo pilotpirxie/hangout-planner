@@ -5,15 +5,15 @@ import { Modal } from "./Modal";
 export const TimeSlotConfirmationModal = ({
   isVisible,
   selectedTimeSlot,
-  nickname,
-  onNicknameChange,
+  username,
+  onUsernameChange,
   onClose,
   onConfirm,
 }: {
   isVisible: boolean;
   selectedTimeSlot: TimeSlot | null;
-  nickname: string;
-  onNicknameChange: (nickname: string) => void;
+  username: string;
+  onUsernameChange: (username: string) => void;
   onClose: () => void;
   onConfirm: () => void;
 }) => {
@@ -30,14 +30,14 @@ export const TimeSlotConfirmationModal = ({
         <strong>{dayjs(selectedTimeSlot?.endDate).format("DD-MM-YYYY HH:mm")}</strong>?
       </p>
       <p>
-        Type your name or nickname below to confirm. It will be shared with others attending the event.
+        Type your name or username below to confirm. It will be shared with others attending the event.
       </p>
       <input
         type="text"
         className="form-control"
-        placeholder="Your name or nickname"
-        value={nickname}
-        onChange={(e) => { onNicknameChange(e.target.value); }}
+        placeholder="Your name or username"
+        value={username}
+        onChange={(e) => { onUsernameChange(e.target.value); }}
       />
     </Modal>
   );

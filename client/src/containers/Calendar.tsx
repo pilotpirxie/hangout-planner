@@ -5,13 +5,14 @@ import { CalendarHeader } from "../components/CalendarHeader";
 import { DaySlotsModal } from "../components/DaySlotsModal";
 import { MonthGridView } from "../components/MonthGridView";
 import { TimeSlotConfirmationModal } from "../components/TimeSlotConfirmationModal";
+import { VotesView } from "../components/VotesView";
 import { WeekView } from "../components/WeekView";
 import { calendarsApi } from "../data/calendarsApi";
 import { useTimeSlotSelection } from "../hooks/useTimeSlotSelection";
 import type { TimeSlot } from "../types";
 
 export const Calendar = () => {
-  const [viewMode, setViewMode] = useState<"week" | "month">("week");
+  const [viewMode, setViewMode] = useState<"week" | "month" | "votes">("week");
   const [currentWeek, setCurrentWeek] = useState(dayjs().toDate());
   const [currentMonth, setCurrentMonth] = useState(dayjs().toDate());
   const [selectedDaySlots, setSelectedDaySlots] = useState<TimeSlot[] | null>(null);
@@ -50,12 +51,18 @@ export const Calendar = () => {
   const {
     selectedTimeSlotId,
     selectedTimeSlot,
-    nickname,
-    setNickname,
+    username,
+    setUsername,
     handleClickTimeSlot,
     handleCloseModal,
     handleConfirm,
-  } = useTimeSlotSelection(mappedTimeSlots, params.id);
+  } = useTimeSlotSelection(mappedTimeSlots, params.id, password);
+
+  const [getVotes, { data: votes }] = calendarsApi.useLazyGetCalendarVotesQuery();
+  useEffect(() => {
+    if (viewMode !== "votes" || !params.id) return;
+    void getVotes({ calendar_id: params.id, password });
+  }, [viewMode, params.id, getVotes, password]);
 
   const handleWeekChange = (direction: "prev" | "next") => {
     setCurrentWeek((prev) => {
@@ -148,13 +155,19 @@ export const Calendar = () => {
                 currentWeek={currentWeek}
                 onTimeSlotClick={handleClickTimeSlot}
               />
-            ) : (
+            ) : null}
+            {viewMode === "month" ? (
               <MonthGridView
                 timeSlots={mappedTimeSlots}
                 currentMonth={currentMonth}
                 onDayClick={handleDayClick}
               />
-            )}
+            ) : null}
+            {viewMode === "votes" ? (
+              <VotesView
+                votes={votes || []}
+              />
+            ) : null}
           </div>
         </div>
       </div>
@@ -170,8 +183,8 @@ export const Calendar = () => {
       <TimeSlotConfirmationModal
         isVisible={!!selectedTimeSlotId}
         selectedTimeSlot={selectedTimeSlot}
-        nickname={nickname}
-        onNicknameChange={setNickname}
+        username={username}
+        onUsernameChange={setUsername}
         onClose={handleCloseModal}
         onConfirm={handleConfirm}
       />

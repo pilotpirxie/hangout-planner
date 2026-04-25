@@ -15,24 +15,20 @@ const createCalendar = `-- name: CreateCalendar :one
 INSERT INTO calendars (
   title,
   description,
-  location,
-  accept_responses_until,
   password,
   salt,
   admin_token
 )
-VALUES ($1, $2, $3, $4, $5, $6, $7)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, admin_token
 `
 
 type CreateCalendarParams struct {
-	Title                string             `json:"title"`
-	Description          *string            `json:"description"`
-	Location             *string            `json:"location"`
-	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
-	Password             *string            `json:"password"`
-	Salt                 *string            `json:"salt"`
-	AdminToken           string             `json:"admin_token"`
+	Title       string  `json:"title"`
+	Description *string `json:"description"`
+	Password    *string `json:"password"`
+	Salt        *string `json:"salt"`
+	AdminToken  string  `json:"admin_token"`
 }
 
 type CreateCalendarRow struct {
@@ -44,8 +40,6 @@ func (q *Queries) CreateCalendar(ctx context.Context, arg CreateCalendarParams) 
 	row := q.db.QueryRow(ctx, createCalendar,
 		arg.Title,
 		arg.Description,
-		arg.Location,
-		arg.AcceptResponsesUntil,
 		arg.Password,
 		arg.Salt,
 		arg.AdminToken,
@@ -75,8 +69,6 @@ SELECT
   id, 
   title,
   description,
-  location,
-  accept_responses_until,
   created_at,
   updated_at
 FROM calendars
@@ -84,13 +76,11 @@ WHERE id = $1
 `
 
 type GetCalendarByIDRow struct {
-	ID                   pgtype.UUID        `json:"id"`
-	Title                string             `json:"title"`
-	Description          *string            `json:"description"`
-	Location             *string            `json:"location"`
-	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+	ID          pgtype.UUID        `json:"id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalendarByIDRow, error) {
@@ -100,8 +90,6 @@ func (q *Queries) GetCalendarByID(ctx context.Context, id pgtype.UUID) (GetCalen
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Location,
-		&i.AcceptResponsesUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -113,8 +101,6 @@ SELECT
   id, 
   title,
   description,
-  location,
-  accept_responses_until,
   created_at,
   updated_at
 FROM calendars
@@ -127,13 +113,11 @@ type GetCalendarByIDAndAdminTokenParams struct {
 }
 
 type GetCalendarByIDAndAdminTokenRow struct {
-	ID                   pgtype.UUID        `json:"id"`
-	Title                string             `json:"title"`
-	Description          *string            `json:"description"`
-	Location             *string            `json:"location"`
-	AcceptResponsesUntil pgtype.Timestamptz `json:"accept_responses_until"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+	ID          pgtype.UUID        `json:"id"`
+	Title       string             `json:"title"`
+	Description *string            `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalendarByIDAndAdminTokenParams) (GetCalendarByIDAndAdminTokenRow, error) {
@@ -143,8 +127,6 @@ func (q *Queries) GetCalendarByIDAndAdminToken(ctx context.Context, arg GetCalen
 		&i.ID,
 		&i.Title,
 		&i.Description,
-		&i.Location,
-		&i.AcceptResponsesUntil,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

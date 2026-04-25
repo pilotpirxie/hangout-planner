@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,10 +15,14 @@ import (
 
 func RespondJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if encodingError := json.NewEncoder(w).Encode(data); encodingError != nil {
-		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+	var buf bytes.Buffer
+	if encodingError := json.NewEncoder(&buf).Encode(data); encodingError != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"error": "failed to encode response"}`))
+		return
 	}
+	w.WriteHeader(status)
+	_, _ = w.Write(buf.Bytes())
 }
 
 func RespondError(w http.ResponseWriter, status int, message string, err *error) {
@@ -68,11 +73,14 @@ type RequestOptions struct {
 	Headers any
 }
 
-func ParseRequest(r *http.Request, options RequestOptions) error {
+func ParseRequest(w http.ResponseWriter, r *http.Request, options RequestOptions) error {
 	if options.Body != nil {
 		if r.Body == nil {
 			return fmt.Errorf("Missing request body")
 		}
+
+		r.Body = http.MaxBytesReader(w, r.Body, 1048576) // 1 MB limit
+
 		if decodingError := json.NewDecoder(r.Body).Decode(options.Body); decodingError != nil {
 			return fmt.Errorf("Invalid JSON body: %w", decodingError)
 		}

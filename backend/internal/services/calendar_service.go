@@ -2,7 +2,9 @@ package services
 
 import (
 	"context"
+	"crypto/subtle"
 	"fmt"
+	"meeting-planner/backend/internal/db"
 	"meeting-planner/backend/internal/db/sqlc"
 	"time"
 
@@ -10,13 +12,15 @@ import (
 )
 
 type CalendarService struct {
+	db              *db.DB
 	queries         *sqlc.Queries
 	passwordManager *PasswordManager
 }
 
-func NewCalendarService(queries *sqlc.Queries, passwordManager *PasswordManager) *CalendarService {
+func NewCalendarService(database *db.DB, passwordManager *PasswordManager) *CalendarService {
 	return &CalendarService{
-		queries:         queries,
+		db:              database,
+		queries:         database.Queries,
 		passwordManager: passwordManager,
 	}
 }
@@ -24,7 +28,6 @@ func NewCalendarService(queries *sqlc.Queries, passwordManager *PasswordManager)
 type CreateCalendarInput struct {
 	Title                string
 	Description          *string
-	Location             *string
 	AcceptResponsesUntil *time.Time
 	Password             *string
 }
@@ -56,17 +59,9 @@ func (s *CalendarService) CreateCalendar(ctx context.Context, input *CreateCalen
 	queryParams := sqlc.CreateCalendarParams{
 		Title:       input.Title,
 		Description: input.Description,
-		Location:    input.Location,
 		Password:    calendarPassword,
 		Salt:        calendarSalt,
 		AdminToken:  randomAdminToken,
-	}
-
-	if input.AcceptResponsesUntil != nil {
-		queryParams.AcceptResponsesUntil = pgtype.Timestamptz{
-			Time:  *input.AcceptResponsesUntil,
-			Valid: true,
-		}
 	}
 
 	calendarRow, creationError := s.queries.CreateCalendar(ctx, queryParams)
@@ -88,6 +83,14 @@ type CreateCalendarTimeSlotsInput struct {
 }
 
 func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input *CreateCalendarTimeSlotsInput) error {
+	tx, err := s.db.Pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	qtx := s.queries.WithTx(tx)
+
 	for _, slot := range input.TimeSlots {
 		queryParams := sqlc.CreateCalendarTimeSlotParams{
 			CalendarID: input.CalendarID,
@@ -101,10 +104,14 @@ func (s *CalendarService) CreateCalendarTimeSlots(ctx context.Context, input *Cr
 			},
 		}
 
-		_, creationError := s.queries.CreateCalendarTimeSlot(ctx, queryParams)
+		_, creationError := qtx.CreateCalendarTimeSlot(ctx, queryParams)
 		if creationError != nil {
 			return fmt.Errorf("failed to create calendar time slot: %w", creationError)
 		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return nil
@@ -163,5 +170,38 @@ func (s *CalendarService) VerifyCalendarPassword(ctx context.Context, calendarID
 		return false, fmt.Errorf("failed to hash provided password: %w", hashErr)
 	}
 
-	return storedCredentials.Password != nil && *storedCredentials.Password == hashedPassword, nil
+	isMatch := storedCredentials.Password != nil && subtle.ConstantTimeCompare([]byte(*storedCredentials.Password), []byte(hashedPassword)) == 1
+	return isMatch, nil
+}
+
+func (s *CalendarService) GetCalendarTimeSlotByID(ctx context.Context, timeSlotID pgtype.UUID) (*sqlc.CalendarTimeSlot, error) {
+	timeSlot, retrievalError := s.queries.GetCalendarTimeSlotByID(ctx, timeSlotID)
+	if retrievalError != nil {
+		return nil, fmt.Errorf("failed to retrieve calendar time slot: %w", retrievalError)
+	}
+
+	return &timeSlot, nil
+}
+
+func (s *CalendarService) GetCalendarVotes(ctx context.Context, calendarID pgtype.UUID) ([]sqlc.GetVotesByCalendarIDRow, error) {
+	votes, retrievalError := s.queries.GetVotesByCalendarID(ctx, calendarID)
+	if retrievalError != nil {
+		return nil, fmt.Errorf("failed to retrieve calendar votes: %w", retrievalError)
+	}
+
+	return votes, nil
+}
+
+func (s *CalendarService) Vote(ctx context.Context, calendarID pgtype.UUID, timeSlotID pgtype.UUID, username string) error {
+	_, creationError := s.queries.CreateVote(ctx, sqlc.CreateVoteParams{
+		CalendarID:         calendarID,
+		Username:           username,
+		CalendarTimeSlotID: timeSlotID,
+	})
+
+	if creationError != nil {
+		return fmt.Errorf("failed to create calendar vote: %w", creationError)
+	}
+
+	return nil
 }

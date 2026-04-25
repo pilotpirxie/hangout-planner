@@ -13,35 +13,22 @@ import (
 
 const createVote = `-- name: CreateVote :one
 INSERT INTO votes (
-  id,
   calendar_id,
   calendar_time_slot_id,
-  username,
-  created_at,
-  updated_at
+  username
 )
-VALUES ($1, $2, $3, $4, $5, $6)
+VALUES ($1, $2, $3)
 RETURNING id, calendar_id, calendar_time_slot_id, username, created_at, updated_at
 `
 
 type CreateVoteParams struct {
-	ID                 pgtype.UUID        `json:"id"`
-	CalendarID         pgtype.UUID        `json:"calendar_id"`
-	CalendarTimeSlotID pgtype.UUID        `json:"calendar_time_slot_id"`
-	Username           string             `json:"username"`
-	CreatedAt          pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	CalendarID         pgtype.UUID `json:"calendar_id"`
+	CalendarTimeSlotID pgtype.UUID `json:"calendar_time_slot_id"`
+	Username           string      `json:"username"`
 }
 
 func (q *Queries) CreateVote(ctx context.Context, arg CreateVoteParams) (Vote, error) {
-	row := q.db.QueryRow(ctx, createVote,
-		arg.ID,
-		arg.CalendarID,
-		arg.CalendarTimeSlotID,
-		arg.Username,
-		arg.CreatedAt,
-		arg.UpdatedAt,
-	)
+	row := q.db.QueryRow(ctx, createVote, arg.CalendarID, arg.CalendarTimeSlotID, arg.Username)
 	var i Vote
 	err := row.Scan(
 		&i.ID,
@@ -64,36 +51,51 @@ func (q *Queries) DeleteVotesByID(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
-const listVotesByCalendarID = `-- name: ListVotesByCalendarID :many
-SELECT id, calendar_id, calendar_time_slot_id, username, created_at
+const getVotesByCalendarID = `-- name: GetVotesByCalendarID :many
+SELECT 
+  votes.id, 
+  votes.calendar_id, 
+  votes.calendar_time_slot_id, 
+  votes.username, 
+  votes.created_at, 
+  votes.updated_at, 
+  calendar_time_slots.start_date, 
+  calendar_time_slots.end_date
 FROM votes
-WHERE calendar_id = $1
-ORDER BY created_at ASC
+LEFT JOIN calendar_time_slots ON votes.calendar_time_slot_id = calendar_time_slots.id
+WHERE votes.calendar_id = $1
+ORDER BY votes.created_at ASC
 `
 
-type ListVotesByCalendarIDRow struct {
+type GetVotesByCalendarIDRow struct {
 	ID                 pgtype.UUID        `json:"id"`
 	CalendarID         pgtype.UUID        `json:"calendar_id"`
 	CalendarTimeSlotID pgtype.UUID        `json:"calendar_time_slot_id"`
 	Username           string             `json:"username"`
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	StartDate          pgtype.Timestamptz `json:"start_date"`
+	EndDate            pgtype.Timestamptz `json:"end_date"`
 }
 
-func (q *Queries) ListVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]ListVotesByCalendarIDRow, error) {
-	rows, err := q.db.Query(ctx, listVotesByCalendarID, calendarID)
+func (q *Queries) GetVotesByCalendarID(ctx context.Context, calendarID pgtype.UUID) ([]GetVotesByCalendarIDRow, error) {
+	rows, err := q.db.Query(ctx, getVotesByCalendarID, calendarID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []ListVotesByCalendarIDRow{}
+	items := []GetVotesByCalendarIDRow{}
 	for rows.Next() {
-		var i ListVotesByCalendarIDRow
+		var i GetVotesByCalendarIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CalendarID,
 			&i.CalendarTimeSlotID,
 			&i.Username,
 			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.StartDate,
+			&i.EndDate,
 		); err != nil {
 			return nil, err
 		}
