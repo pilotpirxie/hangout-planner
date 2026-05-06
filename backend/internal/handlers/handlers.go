@@ -7,7 +7,7 @@ import (
 
 type Handler struct {
 	DB              *db.DB
-	CalendarService *services.CalendarService
+	CalendarService CalendarServicer
 }
 
 func New(database *db.DB, passwordManager *services.PasswordManager) *Handler {
